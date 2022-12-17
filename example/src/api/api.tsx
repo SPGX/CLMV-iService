@@ -1,3 +1,5 @@
+// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 // import api from './index'
 import config from '../config/env';
@@ -10,7 +12,8 @@ export default {
     return await axios
       .post(`${config.api}/login?username=${username}&password=${password}`)
       .then(async (res: any) => {
-        // console.log('login >>>', res);
+        // await AsyncStorage.setItem('token', res?.data?.data?.password)
+        console.log('login >>>', res?.data?.data?.password);
         return res;
       })
       .catch((err: any) => {
@@ -18,6 +21,7 @@ export default {
         return err;
       });
   },
+
   getSearch: async (search: any) => {
     return await axios
       .get(`${config.api}/getforeigner?search=${search}`)
@@ -30,6 +34,55 @@ export default {
         return err;
       });
   },
+
+  postUploadImage: async (file_img: any, pic_no: number, id: number) => {
+    const formData = new FormData();
+    formData.append('file_img', {
+      file_img: file_img,
+      pic_no: pic_no,
+      id: id,
+    });
+
+    const token = await AsyncStorage.getItem('token')
+    console.log("token >>>>>", token);
+
+    const configs = {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'multipart/form-data',
+      },
+      data: formData,
+    };
+
+    return fetch(`${config.api}/uploadfile`, configs)
+      .then(async (res: any) => {
+        // console.log('login >>>', res);
+        return res;
+      })
+      .catch((err: any) => {
+        console.log('ERR >>', err);
+        return err;
+      });
+
+    // return await axios
+    //   .post(`${config.api}/uploadfile`)
+      // .then(async (res: any) => {
+      //   // console.log('login >>>', res);
+      //   return res;
+      // })
+      // .catch((err: any) => {
+      //   console.log('ERR >>', err);
+      //   return err;
+      // });
+  },
+
+
+
+
+
+
+
 
   postRemoveImg2: async (image_file: any, size: any) => {
     const formData = new FormData();

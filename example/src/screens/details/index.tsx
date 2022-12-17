@@ -21,13 +21,18 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 // import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-import { RNCamera } from 'react-native-camera';
-// import { Camera } from 'react-native-vision-camera';
+// import { RNCamera } from 'react-native-camera';
+import { Camera, useCameraDevices } from 'react-native-vision-camera';
 import { useIsFocused } from '@react-navigation/native';
 // import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import { replaceBackground } from 'react-native-image-selfie-segmentation';
 
+ interface Home {
+  resolve: () => void;
+  useCameraDevices: () => void;
+}
 export default function Home() {
+ 
   const navigation = useNavigation<any>();
   //Images
   const [imageFace, setImageFace] = useState<any>(null);
@@ -50,9 +55,10 @@ export default function Home() {
   const [opencam, setOpenCam] = useState<boolean>(true);
   const [switch_c, setSwitch_c] = useState<boolean>(true);
   const [, setAvatarSource] = useState<any>(null);
-  const cameraRef = useRef<any>(null);
+  const camera = useRef<Camera>(null)
   // const launchCamera(options?, callback);
-
+  const devices = useCameraDevices()
+  
   const [image, setImage] = useState();
   const [backgroundImage] = useState(
     'https://coolbackgrounds.io/images/backgrounds/white/pure-white-background-85a2a7fd.jpg'
@@ -61,6 +67,9 @@ export default function Home() {
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     getDataAccount();
+    // setTimeout(() => {
+    //   setRefreshing(false);
+    // }, 200);
     wait(2000).then(() => {
       setRefreshing(false);
     });
@@ -73,6 +82,7 @@ export default function Home() {
   const isFocused = useIsFocused();
 
   useEffect(() => {
+    // setImageFace(null)
     getDataAccount();
     pickImageFace();
     pickImagePassport();
@@ -103,25 +113,13 @@ export default function Home() {
     isFocused,
   ]);
 
-  const onProcessImageHandler = async () => {
-    if (imageFace && backgroundImage) {
-      await replaceBackground(imageFace, backgroundImage, 400)
-        .then(async (response: any) => {
-          setImage(response);
-          await AsyncStorage.setItem('image_face_remove', response);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-  };
-
   const handleRemove = async (v: any) => {
     if (v === 'face') {
       const UpImages = await AsyncStorage.removeItem('image_face');
+      const UpImages2 = await AsyncStorage.removeItem('image_face_remove');
       setImageFace(null);
       setCloseCamera(false);
-      return UpImages;
+      return [UpImages, UpImages2];
     }
   };
 
@@ -133,31 +131,27 @@ export default function Home() {
       cropping: false,
     }).then(async (image) => {
       if (v === 'face') {
-        setAvatarSource(image);
         const UpImages = await AsyncStorage.setItem('image_face', image?.path);
-        setImageFace(UpImages);
-        onProcessImageHandler();
+        const data = await api.postUploadImage(UpImages, 1, account?.wp_rn_no);
+        setImageFace(data?.url);
         return UpImages;
       }
       if (v === 'passport') {
-        const UpImages = await AsyncStorage.setItem(
-          'image_passport',
-          image?.path
-        );
-        setImagePassport(UpImages);
+        const UpImages = await AsyncStorage.setItem('image_passport', image?.path);
+        const data = await api.postUploadImage(UpImages, 2, account?.wp_rn_no);
+        setImagePassport(data?.url);
         return UpImages;
       }
       if (v === 'visa') {
         const UpImages = await AsyncStorage.setItem('image_visa', image?.path);
-        setImageVisa(UpImages);
+        const data = await api.postUploadImage(UpImages, 3, account?.wp_rn_no);
+        setImageVisa(data?.url);
         return UpImages;
       }
       if (v === 'request') {
-        const UpImages = await AsyncStorage.setItem(
-          'image_request',
-          image?.path
-        );
-        setImageRequest(UpImages);
+        const UpImages = await AsyncStorage.setItem('image_request', image?.path);
+        const data = await api.postUploadImage(UpImages, 3, account?.wp_rn_no);
+        setImageRequest(data?.url);
         return UpImages;
       }
       if (v === 'secure') {
@@ -165,7 +159,8 @@ export default function Home() {
           'image_secure',
           image?.path
         );
-        setImageSecure(UpImages);
+        const data = await api.postUploadImage(UpImages, 3, account?.wp_rn_no);
+        setImageSecure(data?.url);
         return UpImages;
       }
       if (v === 'health') {
@@ -179,10 +174,43 @@ export default function Home() {
     });
   };
 
+  const handleSave = async () => {
+    console.log("handleSave")
+    if (camera) { 
+      setOpenCam(true);
+    }
+  };
+
   const handleCap = async () => {
-    if (cameraRef) {
-      const data = await cameraRef.current.takePictureAsync();
-      setCam(data.uri);
+    if (camera) {
+      const photo = await camera?.current?.takePhoto()
+      console.log("photo", photo);
+      setCam('file://' + photo?.path);
+      setImageFace('file://' + photo?.path)
+      await AsyncStorage.setItem('image_face', 'file://' + photo?.path)
+      onProcessImageHandler('file://' + photo?.path)
+    }
+    
+    // if (cameraRef) {
+    //   const data = await cameraRef.current.takePictureAsync();
+    //   setCam(data.uri);
+    // }
+  };
+
+  const onProcessImageHandler = async (data: any) => {
+    console.log("cam >>", cam);
+    if (data) {
+        if (imageFace && backgroundImage) {
+        await replaceBackground(imageFace, backgroundImage, 2000)
+          .then(async (response: any) => {
+            console.log("response >>", response);
+            setImage(response);
+            await AsyncStorage.setItem('image_face_remove', response);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
+      }
     }
   };
 
@@ -209,6 +237,7 @@ export default function Home() {
   };
 
   const getDataAccount = async () => {
+    
     const data = await api.getSearch(await AsyncStorage.getItem('account'));
     if (data?.data?.code === 200) {
       if (data?.data?.data?.length === 0) {
@@ -227,7 +256,9 @@ export default function Home() {
     if (await AsyncStorage.getItem('image_face')) {
       const data = await AsyncStorage.getItem('image_face');
       setImageFace(data);
-      onProcessImageHandler();
+      // if (imageFace) {
+      //   onProcessImageHandler();
+      // }
     }
   };
 
@@ -398,12 +429,6 @@ export default function Home() {
     setCam(null);
   };
 
-  const handleSave = async () => {
-    const data = await AsyncStorage.setItem('image_face', cam);
-    setOpenCam(true);
-    return data;
-  };
-
   const DocumentCamera = (Name: any, Color: string, onPress: any) => {
     return (
       <TouchableOpacity
@@ -559,7 +584,7 @@ export default function Home() {
                           backgroundColor: imageFace ? 'transparent' : 'grey',
                         }}
                       >
-                        {imageFace ? (
+                        {image ? (
                           <Image
                             resizeMode="contain"
                             source={{ uri: image }}
@@ -603,11 +628,10 @@ export default function Home() {
             >
               {/* <Image
                 resizeMode="contain"
-                source={{ uri: image }}
+                source={{ uri: imageFace }}
                 style={{ width: '50%', height: '50%' }}
               /> */}
               <TouchableOpacity
-                onPress={() => onProcessImageHandler()}
                 style={styles.bgTitle}
               >
                 <Text style={styles.textBlue}>เอกสารสำคัญ</Text>
@@ -665,8 +689,20 @@ export default function Home() {
             </TouchableOpacity>
           </View>
           {!cam ? (
-            <>
-              <RNCamera
+              <>
+                <Camera
+                  ref={camera}
+                  style={{ width: 'auto',
+                    height: '60%',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    position: 'relative',
+                  }}
+                    photo={true}
+                    device={switch_c ? devices.front : devices.back }
+                    isActive={true}
+                />
+              {/* <RNCamera
                 ref={cameraRef}
                 captureAudio={false}
                 type={
@@ -701,7 +737,7 @@ export default function Home() {
                     }}
                   />
                 </View>
-              </RNCamera>
+              </RNCamera> */}
               <View
                 style={{
                   position: 'absolute',
@@ -762,7 +798,10 @@ export default function Home() {
                 </TouchableOpacity>
               </View>
             </>
-          ) : (
+            ) : (
+                // <View>
+                //   <Text>Test</Text>
+                // </View>
             <>
               <View
                 style={{

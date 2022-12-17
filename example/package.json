@@ -1,6 +1,6 @@
 {
-  "name": "laboraccount",
-  "description": "Demo Application",
+  "name": "clmv_iservice",
+  "description": "Example app clmv_iservice",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -12,14 +12,12 @@
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.17.11",
-    "@react-navigation/native": "^6.0.16",
+    "@react-navigation/native": "^6.0.13",
     "@react-navigation/native-stack": "^6.9.1",
     "axios": "^1.2.1",
-    "hermes-engine": "^0.11.0",
     "lottie-react-native": "^5.1.4",
-    "react": "18.1.0",
-    "react-native": "^0.70.6",
-    "react-native-camera": "^4.2.1",
+    "react": "17.0.2",
+    "react-native": "0.68.2",
     "react-native-image-crop-picker": "^0.38.1",
     "react-native-image-picker": "^4.10.2",
     "react-native-image-selfie-segmentation": "^0.2.3",
@@ -30,8 +28,7 @@
     "react-native-simple-radio-button": "^2.7.4",
     "react-native-svg": "^13.6.0",
     "react-native-vector-icons": "^9.2.0",
-    "react-native-vision-camera": "^2.15.2",
-    "vision-camera-dynamsoft-document-normalizer": "^0.2.0"
+    "react-native-vision-camera": "^2.14.1"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
