@@ -139,6 +139,7 @@ dependencies {
   implementation project(path: ':react-native-vision-camera')
   // DDN
   implementation 'com.dynamsoft:dynamsoftdocumentnormalizer:1.0.10'
+  implementation 'com.google.mlkit:segmentation-selfie:16.0.0-beta4'
 }
 
 if (isNewArchitectureEnabled()) {

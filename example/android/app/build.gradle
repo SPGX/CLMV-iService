@@ -263,6 +263,7 @@ android {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':react-native-vector-icons')
+    implementation 'com.google.mlkit:segmentation-selfie:16.0.0-beta4'
 
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
