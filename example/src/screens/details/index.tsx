@@ -20,11 +20,8 @@ import ImagePicker from 'react-native-image-crop-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-// import SimpleLineIcons from 'react-native-vector-icons/SimpleLineIcons';
-// import { RNCamera } from 'react-native-camera';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
 import {useIsFocused} from '@react-navigation/native';
-// import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import {replaceBackground} from 'react-native-image-selfie-segmentation';
 
 interface Home {
@@ -49,16 +46,13 @@ export default function Home() {
 	const windowWidth = Dimensions.get('window').width;
 	const [refreshing, setRefreshing] = useState(false);
 	const [exImg, setExImg] = useState<any>(null);
-	const [, setDAccount] = useState<any>([]);
 	const [account, setAccount] = useState<any>(null);
 	const [cam, setCam] = useState<any>();
 	const [opencam, setOpenCam] = useState<boolean>(true);
 	const [switch_c, setSwitch_c] = useState<boolean>(true);
-	const [, setAvatarSource] = useState<any>(null);
 	const camera = useRef<Camera>(null);
 	const devices = useCameraDevices();
 
-	const [image, setImage] = useState();
 	const [backgroundImage] = useState(
 		'https://coolbackgrounds.io/images/backgrounds/white/pure-white-background-85a2a7fd.jpg'
 	);
@@ -82,7 +76,12 @@ export default function Home() {
 	}, []);
 
 	const getDataAccount = async () => {
-		setRefreshing(true);
+		setImageFace(null);
+		setImageVisa(null);
+		setImagePassport(null);
+		setImageRequest(null);
+		setImageSecure(null);
+		setImageHealth(null);
 		try {
 			const id: string | null = await AsyncStorage.getItem('account');
 			if (!id) {
@@ -90,52 +89,33 @@ export default function Home() {
 			}
 
 			const {data} = await api.getSearch(id);
-			console.log('data', data[0].img);
 			if (data?.length === 0) return setRefreshing(false);
 			await setFormatImage(data[0].img);
 			await setAccount(data[0]);
-			setRefreshing(false);
 		} catch (error) {
 			console.log('error', error);
-			setRefreshing(false);
 			// Alert.alert('แจ้งเตือน', 'เกิดข้อผิดพลาด');
 		}
 	};
 
 	const setFormatImage = async (images: any[]) => {
-		setImageFace(null);
-		setImagePassport(null);
-		setImageRequest(null);
-		setImageVisa(null);
-		setImageHealth(null);
-		setImageSecure(null);
 		for (const img of images) {
 			const {pic_no, url} = img;
-			console.log('url', url);
-			if (pic_no === 1) {
-				setImageFace(url);
-			}
-			if (pic_no === 2) {
-				setImagePassport(url);
-			}
-			if (pic_no === 3) {
-				setImageVisa(url);
-			}
-			if (pic_no === 4) {
-				setImageRequest(url);
-			}
-			if (pic_no === 5) {
-				setImageSecure(url);
-			}
-			if (pic_no === 6) {
-				setImageHealth(url);
-			}
+			if (pic_no === 1) setImageFace(url);
+			if (pic_no === 2) setImagePassport(url);
+			if (pic_no === 3) setImageVisa(url);
+			if (pic_no === 4) setImageRequest(url);
+			if (pic_no === 5) setImageSecure(url);
+			if (pic_no === 6) setImageHealth(url);
 		}
 	};
 
 	const handleRemove = async (v: any) => {
 		if (v === 'face') {
+			const data = await api.postUploadImage(null, 1, account?.id);
+			getDataAccount();
 			setCloseCamera(false);
+			return data;
 		}
 	};
 
@@ -180,7 +160,6 @@ export default function Home() {
 	};
 
 	const handleSave = async () => {
-		console.log('handleSave');
 		if (camera) {
 			setOpenCam(true);
 		}
@@ -190,21 +169,16 @@ export default function Home() {
 		if (camera) {
 			const photo = await camera?.current?.takePhoto();
 			setCam('file://' + photo?.path);
-			// setImageFace('file://' + photo?.path);
-			// await AsyncStorage.setItem('image_face', 'file://' + photo?.path);
 			onProcessImageHandler('file://' + photo?.path);
 		}
 	};
 
 	const onProcessImageHandler = async (data: any) => {
-		console.log('data DADASDA', data);
 		if (data && backgroundImage) {
 			await replaceBackground(data, backgroundImage, 2000)
 				.then(async (response: any) => {
-					console.log('response >>>', response);
 					const data = await api.postUploadImage(response, 1, account?.id);
 					getDataAccount();
-					console.log('data FaCE>>', data);
 					return data;
 				})
 				.catch(error => {
@@ -219,53 +193,10 @@ export default function Home() {
 		setOpenCam(false);
 	};
 
-	// const pickImageFace = async () => {
-	// if (await AsyncStorage.getItem('image_face')) {
-	// const data = await AsyncStorage.getItem('image_face');
-	// setImageFace(data);
-	// }
-	// };
-
-	const pickImagePassport = async () => {
-		if (await AsyncStorage.getItem('image_passport')) {
-			const data = await AsyncStorage.getItem('image_passport');
-			setImagePassport(data);
-		}
-	};
-
-	const pickImageVisa = async () => {
-		if (await AsyncStorage.getItem('image_visa')) {
-			const data = await AsyncStorage.getItem('image_visa');
-			setImageVisa(data);
-		}
-	};
-
-	const pickImageRequest = async () => {
-		if (await AsyncStorage.getItem('image_request')) {
-			const data = await AsyncStorage.getItem('image_request');
-			setImageRequest(data);
-		}
-	};
-
-	const pickImageSecure = async () => {
-		if (await AsyncStorage.getItem('image_secure')) {
-			const data = await AsyncStorage.getItem('image_secure');
-			setImageSecure(data);
-		}
-	};
-
-	const pickImageHealth = async () => {
-		if (await AsyncStorage.getItem('image_health')) {
-			const data = await AsyncStorage.getItem('image_health');
-			setImageHealth(data);
-		}
-	};
-
 	const handleฺBack = async () => navigation.goBack();
 
 	const handleOpenCamera = async (v: any) => {
 		if (v === 'face') {
-			// pickImageFace();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -273,7 +204,6 @@ export default function Home() {
 			return data;
 		}
 		if (v === 'passport') {
-			// pickImagePassport();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -281,7 +211,6 @@ export default function Home() {
 			return data;
 		}
 		if (v === 'visa') {
-			// pickImageVisa();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -289,7 +218,6 @@ export default function Home() {
 			return data;
 		}
 		if (v === 'request') {
-			// pickImageRequest();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -297,7 +225,6 @@ export default function Home() {
 			return data;
 		}
 		if (v === 'secure') {
-			// pickImageSecure();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -305,7 +232,6 @@ export default function Home() {
 			return data;
 		}
 		if (v === 'health') {
-			// pickImageHealth();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
 			setStartCamera(true);
@@ -322,32 +248,26 @@ export default function Home() {
 	const handleUpload = async (v: any) => {
 		setCloseCamera(true);
 		if (v === 'face') {
-			// pickImageFace();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
 		if (v === 'passport') {
-			// pickImagePassport();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
 		if (v === 'visa') {
-			// pickImageVisa();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
 		if (v === 'request') {
-			// pickImageRequest();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
 		if (v === 'secure') {
-			// pickImageSecure();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
 		if (v === 'health') {
-			// pickImageHealth();
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
@@ -356,32 +276,32 @@ export default function Home() {
 
 	const handleDelete = async (v: any) => {
 		if (v === 'face') {
-			const data = await api.postUploadImage('', 1, account?.id);
+			const data = await api.postUploadImage(null, 1, account?.id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'passport') {
-			const data = await api.postUploadImage('', 2, account?.id);
+			const data = await api.postUploadImage(null, 2, account?.id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'visa') {
-			const data = await api.postUploadImage('', 3, account?.id);
+			const data = await api.postUploadImage(null, 3, account?.id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'request') {
-			const data = await api.postUploadImage('', 4, account?.id);
+			const data = await api.postUploadImage(null, 4, account?.id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'secure') {
-			const data = await api.postUploadImage('', 5, account?.id);
+			const data = await api.postUploadImage(null, 5, account?.id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'health') {
-			const data = await api.postUploadImage('', 6, account?.id);
+			const data = await api.postUploadImage(null, 6, account?.id);
 			getDataAccount();
 			return data;
 		}
@@ -391,9 +311,19 @@ export default function Home() {
 		setCam(null);
 	};
 
+	const Check = async (onPress: string) => {
+		getDataAccount();
+		if (onPress === 'face') setExImg(imageFace);
+		if (onPress === 'passport') setExImg(imagePassport);
+		if (onPress === 'visa') setExImg(imageVisa);
+		if (onPress === 'request') setExImg(imageRequest);
+		if (onPress === 'secure') setExImg(imageSecure);
+		if (onPress === 'health') setExImg(imageHealth);
+	};
+
 	const DocumentCamera = (Name: any, Color: string, onPress: any) => {
 		return (
-			<TouchableOpacity activeOpacity={1} onPress={() => (Color ? setExImg(Color) : {})} style={styles.new_border}>
+			<TouchableOpacity activeOpacity={1} onPress={() => Check(onPress)} style={styles.new_border}>
 				<View style={styles.new_b_doc}>
 					<View style={{flexDirection: 'column'}}>
 						<Text style={styles.new_b_text_1}>{Name}</Text>
@@ -411,6 +341,7 @@ export default function Home() {
 							</Text>
 						</View>
 					</View>
+					{/* <Image resizeMode='contain' source={{uri: imgcheck}} style={{width: 20, height: 20}} /> */}
 					<View style={styles.new_icon}>
 						{Color ? (
 							<>
@@ -459,7 +390,6 @@ export default function Home() {
 				<Modal
 					handleCamera={() => handleCamera('face')}
 					handleGallery={() => handleImage('face')}
-					// handleGallery={() => Alert.alert('แจ้งเตือน', 'รออัพเดท...')}
 					handleClose={handleCloseCamera}
 					handleDelete={() => handleRemove('face')}
 					cancel={undefined}
@@ -577,7 +507,7 @@ export default function Home() {
 							}}
 						>
 							{/* <Image resizeMode='contain' source={{uri: image}} style={{width: '50%', height: '50%'}} /> */}
-							<TouchableOpacity style={styles.bgTitle}>
+							<TouchableOpacity activeOpacity={1} style={styles.bgTitle}>
 								<Text style={styles.textBlue}>เอกสารสำคัญ</Text>
 							</TouchableOpacity>
 							{DocumentCamera('รูป Passport', imagePassport, 'passport')}
@@ -631,42 +561,25 @@ export default function Home() {
 								device={switch_c ? devices.front : devices.back}
 								isActive={true}
 							/>
-							{/* <RNCamera
-                ref={cameraRef}
-                captureAudio={false}
-                type={
-                  switch_c
-                    ? RNCamera.Constants.Type.front
-                    : RNCamera.Constants.Type.back
-                }
-                style={{
-                  width: 'auto',
-                  height: '60%',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  position: 'relative',
-                }}
-              >
-                <View
-                  style={{
-                    height: '100%',
-                    position: 'absolute',
-                    width: '100%',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Image
-                    resizeMode="contain"
-                    source={require('../../assets/images/frame.png')}
-                    style={{
-                      width: windowWidth,
-                      height: windowHeight,
-                      zIndex: 0,
-                      // backgroundColor: 'red',
-                    }}
-                  />
-                </View>
-              </RNCamera> */}
+							<View
+								style={{
+									height: '100%',
+									position: 'absolute',
+									width: '100%',
+									justifyContent: 'center',
+								}}
+							>
+								<Image
+									resizeMode='contain'
+									source={require('../../assets/images/frame.png')}
+									style={{
+										width: windowWidth,
+										height: windowHeight,
+										zIndex: 0,
+										// backgroundColor: 'red',
+									}}
+								/>
+							</View>
 							<View
 								style={{
 									position: 'absolute',

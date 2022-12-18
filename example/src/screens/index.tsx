@@ -46,24 +46,19 @@ export default function Home() {
 
 	const isFocused = useIsFocused();
 
-	// useEffect(() => {
-	// 	getDataAccount();
-	// }, []);
+	useEffect(() => {
+		getDataAccount();
+	}, []);
 
 	const getDataAccount = async () => {
 		setRefreshing(true);
 		try {
 			const id: string | null = await AsyncStorage.getItem('account');
-			// if (!id) {
-			// 	return Alert.alert('แจ้งเตือน', 'ไม่พบไอดีผู้ใช้งาน');
-			// }
 
 			const {data} = await api.getSearch(id);
-			console.log('data', data[0].img);
 			if (data?.length === 0) return setRefreshing(false);
 			await setFormatImage(data[0].img);
 			await setAccount(data[0]);
-			console.log('setAccount', data[0].full_name_en);
 			setRefreshing(false);
 		} catch (error) {
 			console.log('error', error);
@@ -81,32 +76,20 @@ export default function Home() {
 		setImageSecure(null);
 		for (const img of images) {
 			const {pic_no, url} = img;
-			console.log('url', url);
 			if (pic_no === 1) {
 				setImageFace(url);
 			}
-			if (pic_no === 2) {
-				setImagePassport(url);
-			}
-			if (pic_no === 3) {
-				setImageVisa(url);
-			}
-			if (pic_no === 4) {
-				setImageRequest(url);
-			}
-			if (pic_no === 5) {
-				setImageSecure(url);
-			}
-			if (pic_no === 6) {
-				setImageHealth(url);
-			}
+			if (pic_no === 2) setImagePassport(url);
+			if (pic_no === 3) setImageVisa(url);
+			if (pic_no === 4) setImageRequest(url);
+			if (pic_no === 5) setImageSecure(url);
+			if (pic_no === 6) setImageHealth(url);
 		}
 	};
 
 	const onRefresh = React.useCallback(() => {
 		setRefreshing(true);
 		setIsLoading(true);
-		// checkStatus();
 		wait(2000).then(() => {
 			setRefreshing(false), setIsLoading(false);
 		});
@@ -115,6 +98,7 @@ export default function Home() {
 	const GetIMG = async () => {
 		if (await AsyncStorage.getItem('image')) {
 			setCheck(false);
+			getDataAccount();
 			setImage(await AsyncStorage.getItem('image'));
 		} else {
 			setImage('https://i.imgur.com/WyGNtPn.png');
@@ -141,86 +125,60 @@ export default function Home() {
 		await AsyncStorage.removeItem('account');
 		navigation.navigate('login');
 		setData(null);
-		setAccount(null);
+		setAccount([]);
+		setImageFace(null);
+		setImageVisa(null);
+		setImagePassport(null);
+		setImageRequest(null);
+		setImageSecure(null);
+		setImageHealth(null);
+		setNoRequest(null);
 	};
 
-	const handleSearch = async () => {
-		getDataAccount();
-		if (norequest === null) {
+	const handleSearch = async (search: string) => {
+		if (!search) {
 			Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
 			return;
 		}
-		await AsyncStorage.setItem('account', norequest);
-		const data = await api.getSearch(norequest);
+		await AsyncStorage.setItem('account', search);
+		const data = await api.getSearch(search);
 		setAccount([]);
-		if (data?.data?.code === 200) {
-			if (data?.data?.data?.length === 0) {
-				// Alert.alert('แจ้งเตือน', 'ไม่พบข้อมูลแรงงาน');
-				setEmpty(true);
-				setTimeout(() => {
-					setEmpty(false);
-				}, 2000);
-				setAccount(null);
-				return;
-			}
-			if (data?.data?.data?.length > 0) {
-				setAccount(data?.data?.data);
-				// console.log('da account >>', data?.data?.data);
-				checkStatus(data?.data?.data);
-				setIsLoading(true);
-				setTimeout(() => {
-					setIsLoading(false);
-				}, 200);
-			}
+		setImageFace(null);
+		setImageVisa(null);
+		setImagePassport(null);
+		setImageRequest(null);
+		setImageSecure(null);
+		setImageHealth(null);
+		if (data?.data?.length === 0) {
+			setEmpty(true);
+			setTimeout(() => {
+				setEmpty(false);
+			}, 2000);
+			setAccount(null);
+			return;
+		}
 
-			return data;
+		if (data?.data?.length > 0) {
+			setAccount(data?.data[0]);
+			checkStatus(data?.data);
+			setIsLoading(true);
+			setTimeout(() => {
+				setIsLoading(false);
+			}, 200);
 		}
 	};
 
-	// const getDataAccount = async () => {
-	// 	const id: string | null = await AsyncStorage.getItem('account');
-	// 	const {data} = await api.getSearch(id);
-	// 	return id;
-	// };
-
 	const checkStatus = async (dataimg: any) => {
-		setImageFace(null);
-		setImagePassport(null);
-		setImageRequest(null);
-		setImageVisa(null);
-		setImageHealth(null);
-		setImageSecure(null);
-		console.log('dataimg >>', dataimg);
-		const img = account[0]?.img;
-		console.log('IMGGG >>>', img);
-		const data = await img.filter((item: any) => {
-			return item.pic_no === 1;
-		});
-		const data1 = await img.filter((item: any) => {
-			return item.pic_no === 1;
-		});
-		setImageFace(JSON.stringify(data1[0]?.url));
-		const data2 = await img.filter((item: any) => {
-			return item.pic_no === 2;
-		});
-		setImagePassport(JSON.stringify(data2[0]?.url));
-		const data3 = await img.filter((item: any) => {
-			return item.pic_no === 3;
-		});
-		setImageVisa(JSON.stringify(data3[0]?.url));
-		const data4 = await img.filter((item: any) => {
-			return item.pic_no === 4;
-		});
-		setImageRequest(JSON.stringify(data4[0]?.url));
-		const data5 = await img.filter((item: any) => {
-			return item.pic_no === 5;
-		});
-		setImageSecure(JSON.stringify(data5[0]?.url));
-		const data6 = img.filter((item: any) => {
-			return item.pic_no === 6;
-		});
-		setImageHealth(JSON.stringify(data6[0]?.url));
-		return data;
+		const images = dataimg[0]?.img;
+		for (const img of images) {
+			const {pic_no, url} = img;
+			if (pic_no === 1) setImageFace(url);
+			if (pic_no === 2) setImagePassport(url);
+			if (pic_no === 3) setImageVisa(url);
+			if (pic_no === 4) setImageRequest(url);
+			if (pic_no === 5) setImageSecure(url);
+			if (pic_no === 6) setImageHealth(url);
+		}
 	};
 
 	const handleEdit = async () => {
@@ -229,10 +187,7 @@ export default function Home() {
 
 	return (
 		<>
-			<ScrollView
-				// style={{ height: windowHeight + 120 }}
-				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-			>
+			<ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
 				<View
 					style={{
 						flexDirection: 'column',
@@ -290,15 +245,6 @@ export default function Home() {
 									}}
 								>
 									<View style={{width: '70%'}}>
-										{/* <View style={{ width: '100%' }}>
-                      <TextInput
-                        onChangeText={(e) => setNoCustomer(e)}
-                        value={nocustomer}
-                        style={{ ...styles.input, fontFamily: 'Kanit-Regular' }}
-                        placeholder="เลขประจำตัวคนต่างด้าว"
-                        keyboardType="number-pad"
-                      />
-                    </View> */}
 										<View style={{width: '100%', marginTop: 5}}>
 											<TextInput
 												onChangeText={e => setNoRequest(e)}
@@ -310,7 +256,7 @@ export default function Home() {
 										</View>
 									</View>
 									<TouchableOpacity
-										onPress={handleSearch}
+										onPress={() => handleSearch(norequest)}
 										style={{
 											width: '20%',
 											backgroundColor: '#2F8DE4',
@@ -324,20 +270,6 @@ export default function Home() {
 								</View>
 							</View>
 						</View>
-						{/* {check ? (
-              <Image
-                resizeMode="contain"
-                style={{ width: 200, height: 200 }}
-                source={{ uri: image }}
-              />
-            ) : (
-              <Image
-                resizeMode="contain"
-                style={{ width: 200, height: 200 }}
-                source={{ uri: 'file://' + image }}
-                // source={require(image)}
-              />
-            )} */}
 
 						{account ? (
 							<>
@@ -368,7 +300,7 @@ export default function Home() {
 										>
 											<View style={{width: 150, height: 200, borderRadius: 10}}>
 												<Image
-													resizeMode='contain'
+													resizeMode='stretch'
 													style={{
 														width: '100%',
 														height: '100%',

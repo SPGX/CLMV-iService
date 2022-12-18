@@ -9,13 +9,10 @@ import config from '../config/env';
 
 export default {
 	postLogin: async (username: any, password: any) => {
-		console.log('user', username, password);
 		return await axios
 			.post(`${config.api}/login?username=${username}&password=${password}`)
 			.then(async (res: any) => {
-				console.log('res,', res.data.data);
 				await AsyncStorage.setItem('token', res?.data?.data?.token);
-				console.log('login >>>', res?.data?.data?.password);
 				return res;
 			})
 			.catch((err: any) => {
@@ -24,25 +21,10 @@ export default {
 			});
 	},
 
-	// postLogin: async (username: any, password: any) => {
-	// 	return await axios
-	// 		.post(`${config.api}/login?username=${username}&password=${password}`)
-	// 		.then(async (res: any) => {
-	// 			// await AsyncStorage.setItem('token', res?.data?.data?.password)
-	// 			console.log('login >>>', res?.data?.data?.password);
-	// 			return res;
-	// 		})
-	// 		.catch((err: any) => {
-	// 			console.log('ERR >>', err);
-	// 			return err;
-	// 		});
-	// },
-
 	getSearch: async (search: any) => {
 		return await axios
 			.get(`${config.api}/getforeigner?search=${search}`)
 			.then(async (res: any) => {
-				// console.log('login >>>', res);
 				return {
 					data: res?.data?.data,
 				};
@@ -55,51 +37,22 @@ export default {
 
 	postUploadImage: async (file_img: any, pic_no: number, id: number) => {
 		const formData = new FormData();
-		console.log('file_img 1>>', file_img);
-		console.log('pic_no 1>>', pic_no);
-		console.log('id 1>>', id);
-		formData.append('file_img', {
-			uri: file_img,
-			type: 'image/jpeg',
-			name: 'image_file',
-		});
+		if (!file_img) {
+			formData.append('file_img', {
+				type: 'image/jpeg',
+				name: 'image_file',
+			});
+		} else {
+			formData.append('file_img', {
+				uri: file_img,
+				type: 'image/jpeg',
+				name: 'image_file',
+			});
+		}
 		formData.append('pic_no', pic_no);
 		formData.append('id', id);
 
 		const token = await AsyncStorage.getItem('token');
-		// console.log('formData >>>>>', formData);
-
-		// const configs = {
-		// 	method: 'POST',
-		// 	headers: {
-		// 		Authorization: `Bearer ${token}`,
-		// 		'Content-Type': 'multipart/form-data; boundary=<calculated when request is sent>',
-		// 	},
-		// 	data: formData,
-		// };
-
-		// const data = {
-		// 	file_img: file_img,
-		// 	pic_no: pic_no,
-		// 	id: id,
-		// };
-
-		// const response = await axios
-		// 	.post(`${config.api}/uploadfile`, data, {
-		// 		headers: {
-		// 			Authorization: `Bearer ${token}`,
-		// 		},
-		// 	})
-		// 	.then(async (res: any) => {
-		// 		console.log('/res >>>', res);
-		// 		return res;
-		// 	})
-		// 	.catch((err: any) => {
-		// 		console.log('ERR >>', err);
-		// 		return err;
-		// 	});
-
-		// return response;
 
 		await axios({
 			method: 'post',
@@ -111,34 +64,12 @@ export default {
 			},
 		})
 			.then(async (res: any) => {
-				// console.log('/res >>>', res);
 				return res;
 			})
 			.catch((err: any) => {
 				console.log('ERR >>', err);
 				return err;
 			});
-
-		// return fetch(`${config.api}/uploadfile`, configs)
-		// .then(async (res: any) => {
-		// 	console.log('/uploadfile >>>', res);
-		// 	return res;
-		// })
-		// .catch((err: any) => {
-		// 	console.log('ERR >>', err);
-		// 	return err;
-		// });
-
-		// return await axios
-		//   .post(`${config.api}/uploadfile`)
-		// .then(async (res: any) => {
-		//   // console.log('login >>>', res);
-		//   return res;
-		// })
-		// .catch((err: any) => {
-		//   console.log('ERR >>', err);
-		//   return err;
-		// });
 	},
 
 	postRemoveImg2: async (image_file: any, size: any) => {
@@ -203,46 +134,5 @@ export default {
 			.catch(function (error) {
 				console.log(error);
 			});
-		// axios('https://api.remove.bg/v1.0/removebg', {
-		//   method: 'POST',
-		//   formData,
-		//   headers: {
-		//     'X-API-Key': 'GKc5DMGkfx9cR942N86eoEpe',
-		//   },
-		// })
-		// .then(function (response) {
-		//   console.log('response :', response);
-		// })
-		// .catch(function (error) {
-		//   console.log('error from image :', error);
-		// });
-
-		// const data = { image_file, size };
-		// const formData = new FormData();
-		// formData.append('photo', {
-		//   // uri: 'data:image/jpeg;base64,' + `data:file://${imageFace}`,
-		// uri: image_file,
-		// type: 'image/jpg',
-		// name: 'photo',
-		// image_url: 'https://www.remove.bg/example.jpg',
-		// responseType: 'arraybuffer',
-		// });
-		// formData.append('size', 'auto');
-		// console.log('from >>', JSON.stringify(formData));
-		// const body = {
-		//   headers: {
-		//     'X-API-Key': 'GKc5DMGkfx9cR942N86eoEpe',
-		//   },
-		//   data: { image_file: image_file, size: 'auto' },
-		// };
-		// return await axios
-		//   .post(`https://api.remove.bg/v1.0/removebg`, body)
-		//   .then(async (res: any) => {
-		//     console.log('postRemoveImg >>>', res);
-		//   })
-		//   .catch((err: any) => {
-		//     console.log('ERR >>', err);
-		//     return err;
-		//   });
 	},
 };
