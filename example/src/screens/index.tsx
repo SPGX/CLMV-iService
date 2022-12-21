@@ -43,26 +43,28 @@ export default function Home() {
 	const [imageRequest, setImageRequest] = useState<any>(null);
 	const [imageFace, setImageFace] = useState<any>(null);
 	const [empty, setEmpty] = useState<boolean>(false);
+	const [acc, setAcc] = useState<any>(null);
+	const [username, setUserName] = useState<any>('');
 
 	const isFocused = useIsFocused();
 
 	useEffect(() => {
 		getDataAccount();
+		return () => {
+			setNoRequest(null);
+		};
 	}, []);
 
 	const getDataAccount = async () => {
-		setRefreshing(true);
+		setAccount(null);
 		try {
-			const id: string | null = await AsyncStorage.getItem('account');
-
+			const id: string | null = acc;
 			const {data} = await api.getSearch(id);
 			if (data?.length === 0) return setRefreshing(false);
 			await setFormatImage(data[0].img);
 			await setAccount(data[0]);
-			setRefreshing(false);
 		} catch (error) {
 			console.log('error', error);
-			setRefreshing(false);
 			// Alert.alert('แจ้งเตือน', 'เกิดข้อผิดพลาด');
 		}
 	};
@@ -76,9 +78,7 @@ export default function Home() {
 		setImageSecure(null);
 		for (const img of images) {
 			const {pic_no, url} = img;
-			if (pic_no === 1) {
-				setImageFace(url);
-			}
+			if (pic_no === 1) setImageFace(url);
 			if (pic_no === 2) setImagePassport(url);
 			if (pic_no === 3) setImageVisa(url);
 			if (pic_no === 4) setImageRequest(url);
@@ -90,6 +90,7 @@ export default function Home() {
 	const onRefresh = React.useCallback(() => {
 		setRefreshing(true);
 		setIsLoading(true);
+		getUsername();
 		wait(2000).then(() => {
 			setRefreshing(false), setIsLoading(false);
 		});
@@ -106,6 +107,7 @@ export default function Home() {
 	};
 
 	useEffect(() => {
+		getUsername();
 		getDataAccount();
 		GetIMG();
 		return () => {
@@ -118,6 +120,12 @@ export default function Home() {
 
 	const wait = (timeout: number | undefined) => {
 		return new Promise((resolve: any) => setTimeout(resolve, timeout));
+	};
+
+	const getUsername = async () => {
+		const user = await AsyncStorage.getItem('username');
+		setUserName(user);
+		return user;
 	};
 
 	const handleLogout = async () => {
@@ -140,8 +148,7 @@ export default function Home() {
 			Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
 			return;
 		}
-		await AsyncStorage.setItem('account', search);
-		const data = await api.getSearch(search);
+		setAcc(search);
 		setAccount([]);
 		setImageFace(null);
 		setImageVisa(null);
@@ -149,6 +156,13 @@ export default function Home() {
 		setImageRequest(null);
 		setImageSecure(null);
 		setImageHealth(null);
+		const {data} = await api.getSearch(search);
+		// console.log('data >>>>>>', data);
+		if (data?.length === 0) return setRefreshing(false);
+		await setFormatImage(data[0].img);
+		await setAccount(data[0]);
+		await AsyncStorage.setItem('account', search);
+
 		if (data?.data?.length === 0) {
 			setEmpty(true);
 			setTimeout(() => {
@@ -203,6 +217,19 @@ export default function Home() {
 							backgroundColor: '#4399DB',
 						}}
 					>
+						<TouchableOpacity
+							activeOpacity={1}
+							// onPress={handleLogout}
+							style={{
+								position: 'absolute',
+								width: 'auto',
+								height: 30,
+								left: 20,
+								top: Platform.OS === 'android' ? 20 : 40,
+							}}
+						>
+							<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>{username}</Text>
+						</TouchableOpacity>
 						<TouchableOpacity
 							onPress={handleLogout}
 							style={{
@@ -300,7 +327,7 @@ export default function Home() {
 										>
 											<View style={{width: 150, height: 200, borderRadius: 10}}>
 												<Image
-													resizeMode='stretch'
+													resizeMode='cover'
 													style={{
 														width: '100%',
 														height: '100%',

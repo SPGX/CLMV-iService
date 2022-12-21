@@ -53,9 +53,7 @@ export default function Home() {
 	const camera = useRef<Camera>(null);
 	const devices = useCameraDevices();
 
-	const [backgroundImage] = useState(
-		'https://coolbackgrounds.io/images/backgrounds/white/pure-white-background-85a2a7fd.jpg'
-	);
+	const [backgroundImage] = useState('https://i.pinimg.com/originals/f5/05/24/f50524ee5f161f437400aaf215c9e12f.jpg');
 	const isFocused = useIsFocused();
 
 	const onRefresh = React.useCallback(() => {
@@ -101,6 +99,7 @@ export default function Home() {
 	const setFormatImage = async (images: any[]) => {
 		for (const img of images) {
 			const {pic_no, url} = img;
+			// console.log('IMGGG >>>>', img);
 			if (pic_no === 1) setImageFace(url);
 			if (pic_no === 2) setImagePassport(url);
 			if (pic_no === 3) setImageVisa(url);
@@ -175,7 +174,7 @@ export default function Home() {
 
 	const onProcessImageHandler = async (data: any) => {
 		if (data && backgroundImage) {
-			await replaceBackground(data, backgroundImage, 2000)
+			await replaceBackground(data, backgroundImage, 500)
 				.then(async (response: any) => {
 					const data = await api.postUploadImage(response, 1, account?.id);
 					getDataAccount();
@@ -334,10 +333,12 @@ export default function Home() {
 									fontFamily: 'Kanit-Regular',
 									fontSize: 12,
 									color: Color ? 'green' : 'red',
-									maxWidth: Color ? '70%' : '100%',
+									maxWidth: Color ? '100%' : '100%',
 								}}
 							>
-								{Color ? Color : 'ยังไม่ได้อัพโหลด'}
+								{Color
+									? Color.split(`http://203.151.66.114:86/oss_api/public/display/${account?.id}-`)
+									: 'ยังไม่ได้อัพโหลด'}
 							</Text>
 						</View>
 					</View>
@@ -345,15 +346,6 @@ export default function Home() {
 					<View style={styles.new_icon}>
 						{Color ? (
 							<>
-								<TouchableOpacity
-									onPress={() => handleOpenCamera(onPress)}
-									style={{...styles.iconFile, marginRight: 2}}
-								>
-									<Icon name='camera' size={20} color='#fff' />
-								</TouchableOpacity>
-								<TouchableOpacity onPress={() => handleImage(onPress)} style={styles.iconFile}>
-									<AntDesign name='picture' size={20} color='#fff' />
-								</TouchableOpacity>
 								<TouchableOpacity
 									onPress={() => handleDelete(onPress)}
 									style={{
@@ -461,19 +453,15 @@ export default function Home() {
 												onPress={() => handleUpload('face')}
 												style={{
 													borderRadius: 10,
-													width: '90%',
-													height: '90%',
+													width: '80%',
+													height: '100%',
 													justifyContent: 'center',
 													alignItems: 'center',
 													backgroundColor: imageFace ? 'transparent' : 'grey',
 												}}
 											>
 												{imageFace ? (
-													<Image
-														resizeMode='contain'
-														source={{uri: imageFace}}
-														style={{width: '100%', height: '100%'}}
-													/>
+													<Image resizeMode='cover' source={{uri: imageFace}} style={{width: '100%', height: '100%'}} />
 												) : (
 													<>
 														<AntDesign name='plus' size={50} color='#fff' />
@@ -506,7 +494,7 @@ export default function Home() {
 								paddingBottom: 30,
 							}}
 						>
-							{/* <Image resizeMode='contain' source={{uri: image}} style={{width: '50%', height: '50%'}} /> */}
+							{/* <Image resizeMode='contain' source={{uri: backgroundImage}} style={{width: '100%', height: '100%'}} /> */}
 							<TouchableOpacity activeOpacity={1} style={styles.bgTitle}>
 								<Text style={styles.textBlue}>เอกสารสำคัญ</Text>
 							</TouchableOpacity>
@@ -654,7 +642,7 @@ export default function Home() {
 									resizeMode='contain'
 									source={{uri: 'file://' + cam}}
 									style={{
-										width: windowWidth,
+										width: windowWidth / 1,
 										height: windowHeight,
 										zIndex: 0,
 										// backgroundColor: 'red',
@@ -667,7 +655,7 @@ export default function Home() {
 									bottom: 0,
 									backgroundColor: '#000',
 									width: '100%',
-									height: '15%',
+									height: '30%',
 									justifyContent: 'space-around',
 									alignItems: 'center',
 									flexDirection: 'row',
