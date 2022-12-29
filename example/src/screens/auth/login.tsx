@@ -70,32 +70,31 @@ export default function Login() {
 			return;
 		}
 		const login = await api.postLogin(username, password);
-		// console.log('login >>>>', login);
-		// Alert.alert('แจ้งเตือน', username + password + JSON.stringify(login));
-		if (login?.data?.code === 200) {
-			if (login && login?.data?.data?.token) {
-				await AsyncStorage.setItem('token', login?.data?.data?.token);
-				await AsyncStorage.setItem('username', login?.data?.data?.user_name);
+
+		if (login?.data?.length !== 0) {
+			if (login?.data?.code === 200) {
+				if (login && login?.data?.data?.token) {
+					await AsyncStorage.setItem('token', login?.data?.data?.token);
+					await AsyncStorage.setItem('username', login?.data?.data?.user_name);
+				}
+				navigation.navigate('home1');
+				return login;
 			}
-			navigation.navigate('home1');
-			return login;
-		}
-		if (login?.data?.code === 400) {
-			// console.log('400', login.data.message);
+			if (login?.data?.code === 400) {
+				// console.log('400', login.data.message);
+				setAlert(true);
+				setTimeout(() => {
+					setAlert(false);
+				}, 2000);
+				setAlertText('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+			}
+		} else {
 			setAlert(true);
 			setTimeout(() => {
 				setAlert(false);
 			}, 2000);
-			setAlertText('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+			setAlertText(JSON.stringify(login));
 		}
-		// else {
-		// console.log('login', JSON.stringify(login));
-		// setAlert(true);
-		// setTimeout(() => {
-		// 	setAlert(false);
-		// }, 2000);
-		// setAlertText('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-		// }
 	};
 	return (
 		<>

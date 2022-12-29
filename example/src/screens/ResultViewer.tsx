@@ -46,7 +46,6 @@ const ResultViewerScreen: React.FunctionComponent<IResultViewerScreen> = ({navig
 	};
 
 	const normalize = async (value: number) => {
-		console.log(value);
 		const GetType = await AsyncStorage.getItem('cameraType');
 		if (normalizedResult[value]) {
 			setNormalizedImagePath(normalizedResult[value]);
@@ -64,7 +63,6 @@ const ResultViewerScreen: React.FunctionComponent<IResultViewerScreen> = ({navig
 					'{"GlobalParameter":{"Name":"GP","MaxTotalImageDimension":0},"ImageParameterArray":[{"Name":"IP-1","NormalizerParameterName":"NP-1","BaseImageParameterName":""}],"NormalizerParameterArray":[{"Name":"NP-1","ContentType":"CT_DOCUMENT","ColourMode":"ICM_BINARY"}]}'
 				);
 			}
-			console.log('update settings done');
 			let points = route.params.points;
 			let detectionResult: DetectedQuadResult = {
 				confidenceAsDocumentBoundary: 90,
@@ -77,37 +75,34 @@ const ResultViewerScreen: React.FunctionComponent<IResultViewerScreen> = ({navig
 				saveNormalizationResultAsFile: true,
 			});
 			const id = await AsyncStorage.getItem('account');
-			console.log('id >>>>', id);
 			const {data} = await api.getSearch(id);
-			console.log('dataID>>', data[0]?.id);
 
-			console.log('normalizedImageResult -->', normalizedImageResult.imageURL);
 			if (normalizedImageResult.imageURL) {
 				normalizedResult[value] = normalizedImageResult.imageURL;
 				setNormalizedImagePath(normalizedImageResult.imageURL);
 				const UpImages = await AsyncStorage.setItem('image', normalizedImageResult.imageURL);
 				if (GetType === 'face') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 1, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 1, data[0]?.people_id);
 					return UpImages;
 				}
 				if (GetType === 'passport') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 2, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 2, data[0]?.people_id);
 					return UpImages;
 				}
 				if (GetType === 'visa') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 3, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 3, data[0]?.people_id);
 					return UpImages;
 				}
 				if (GetType === 'request') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 4, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 4, data[0]?.people_id);
 					return UpImages;
 				}
 				if (GetType === 'secure') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 5, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 5, data[0]?.people_id);
 					return UpImages;
 				}
 				if (GetType === 'health') {
-					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 6, data[0]?.id);
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 6, data[0]?.people_id);
 
 					return UpImages;
 				}
@@ -153,7 +148,6 @@ const ResultViewerScreen: React.FunctionComponent<IResultViewerScreen> = ({navig
 						formHorizontal={true}
 						labelHorizontal={false}
 						onPress={value => {
-							console.log('value >>', value);
 							normalize(value);
 						}}
 					/>

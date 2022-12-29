@@ -21,8 +21,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
-import {useIsFocused} from '@react-navigation/native';
 import {replaceBackground} from 'react-native-image-selfie-segmentation';
+import ModalWait from '../../components/ModalWait';
 
 interface Home {
 	resolve: () => void;
@@ -51,15 +51,30 @@ export default function Home() {
 	const [opencam, setOpenCam] = useState<boolean>(true);
 	const [switch_c, setSwitch_c] = useState<boolean>(true);
 	const camera = useRef<Camera>(null);
-	const devices = useCameraDevices();
+	const devices = useCameraDevices('wide-angle-camera');
 
 	const [backgroundImage] = useState('https://i.pinimg.com/originals/f5/05/24/f50524ee5f161f437400aaf215c9e12f.jpg');
-	const isFocused = useIsFocused();
+
+	useEffect(() => {
+		getDataAccount();
+	}, []);
+
+	useEffect(() => {
+		const unsubscribe = navigation.addListener('focus', () => {
+			getDataAccount();
+			setRefreshing(true);
+			wait(500).then(() => {
+				setRefreshing(false);
+			});
+		});
+		return () => {
+			unsubscribe;
+		};
+	}, []);
 
 	const onRefresh = React.useCallback(() => {
 		setRefreshing(true);
 		getDataAccount();
-
 		wait(2000).then(() => {
 			setRefreshing(false);
 		});
@@ -69,37 +84,43 @@ export default function Home() {
 		return new Promise((resolve: any) => setTimeout(resolve, timeout));
 	};
 
-	useEffect(() => {
-		getDataAccount();
-	}, []);
-
 	const getDataAccount = async () => {
+		setRefreshing(true);
+		// await Camera.requestCameraPermission();
+		// await Camera.getAvailableCameraDevices();
+		// await Camera.getCameraPermissionStatus();
+		await Camera.getMicrophonePermissionStatus();
 		setImageFace(null);
 		setImageVisa(null);
 		setImagePassport(null);
 		setImageRequest(null);
 		setImageSecure(null);
 		setImageHealth(null);
-		try {
-			const id: string | null = await AsyncStorage.getItem('account');
-			if (!id) {
-				return Alert.alert('แจ้งเตือน', 'ไม่พบไอดีผู้ใช้งาน');
-			}
+		wait(2000).then(async () => {
+			try {
+				const id: string | null = await AsyncStorage.getItem('account');
+				if (!id) {
+					return Alert.alert('แจ้งเตือน', 'ไม่พบไอดีผู้ใช้งาน');
+				}
 
-			const {data} = await api.getSearch(id);
-			if (data?.length === 0) return setRefreshing(false);
-			await setFormatImage(data[0].img);
-			await setAccount(data[0]);
-		} catch (error) {
-			console.log('error', error);
-			// Alert.alert('แจ้งเตือน', 'เกิดข้อผิดพลาด');
-		}
+				const {data} = await api.getSearch(id);
+
+				if (data?.length === 0) return setRefreshing(false);
+				if (data[0]?.img !== null) {
+					await setFormatImage(data[0].img);
+				}
+				await setAccount(data[0]);
+			} catch (error) {
+				console.log('error >>>>>>>>>>>>', error);
+				// Alert.alert('แจ้งเตือน', 'เกิดข้อผิดพลาด');
+			}
+			setRefreshing(false);
+		});
 	};
 
 	const setFormatImage = async (images: any[]) => {
 		for (const img of images) {
 			const {pic_no, url} = img;
-			// console.log('IMGGG >>>>', img);
 			if (pic_no === 1) setImageFace(url);
 			if (pic_no === 2) setImagePassport(url);
 			if (pic_no === 3) setImageVisa(url);
@@ -111,7 +132,7 @@ export default function Home() {
 
 	const handleRemove = async (v: any) => {
 		if (v === 'face') {
-			const data = await api.postUploadImage(null, 1, account?.id);
+			const data = await api.postUploadImage(null, 1, account?.people_id);
 			getDataAccount();
 			setCloseCamera(false);
 			return data;
@@ -126,32 +147,32 @@ export default function Home() {
 			cropping: false,
 		}).then(async image => {
 			if (v === 'face') {
-				const data = await api.postUploadImage(image?.path, 1, account?.id);
+				const data = await api.postUploadImage(image?.path, 1, account?.people_id);
 				getDataAccount();
 				return data;
 			}
 			if (v === 'passport') {
-				const data = await api.postUploadImage(image?.path, 2, account?.id);
+				const data = await api.postUploadImage(image?.path, 2, account?.people_id);
 				getDataAccount();
 				return data;
 			}
 			if (v === 'visa') {
-				const data = await api.postUploadImage(image?.path, 3, account?.id);
+				const data = await api.postUploadImage(image?.path, 3, account?.people_id);
 				getDataAccount();
 				return data;
 			}
 			if (v === 'request') {
-				const data = await api.postUploadImage(image?.path, 4, account?.id);
+				const data = await api.postUploadImage(image?.path, 4, account?.people_id);
 				getDataAccount();
 				return data;
 			}
 			if (v === 'secure') {
-				const data = await api.postUploadImage(image?.path, 5, account?.id);
+				const data = await api.postUploadImage(image?.path, 5, account?.people_id);
 				getDataAccount();
 				return data;
 			}
 			if (v === 'health') {
-				const data = await api.postUploadImage(image?.path, 6, account?.id);
+				const data = await api.postUploadImage(image?.path, 6, account?.people_id);
 				getDataAccount();
 				return data;
 			}
@@ -176,7 +197,7 @@ export default function Home() {
 		if (data && backgroundImage) {
 			await replaceBackground(data, backgroundImage, 500)
 				.then(async (response: any) => {
-					const data = await api.postUploadImage(response, 1, account?.id);
+					const data = await api.postUploadImage(response, 1, account?.people_id);
 					getDataAccount();
 					return data;
 				})
@@ -275,32 +296,32 @@ export default function Home() {
 
 	const handleDelete = async (v: any) => {
 		if (v === 'face') {
-			const data = await api.postUploadImage(null, 1, account?.id);
+			const data = await api.postUploadImage(null, 1, account?.people_id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'passport') {
-			const data = await api.postUploadImage(null, 2, account?.id);
+			const data = await api.postUploadImage(null, 2, account?.people_id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'visa') {
-			const data = await api.postUploadImage(null, 3, account?.id);
+			const data = await api.postUploadImage(null, 3, account?.people_id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'request') {
-			const data = await api.postUploadImage(null, 4, account?.id);
+			const data = await api.postUploadImage(null, 4, account?.people_id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'secure') {
-			const data = await api.postUploadImage(null, 5, account?.id);
+			const data = await api.postUploadImage(null, 5, account?.people_id);
 			getDataAccount();
 			return data;
 		}
 		if (v === 'health') {
-			const data = await api.postUploadImage(null, 6, account?.id);
+			const data = await api.postUploadImage(null, 6, account?.people_id);
 			getDataAccount();
 			return data;
 		}
@@ -337,7 +358,7 @@ export default function Home() {
 								}}
 							>
 								{Color
-									? Color.split(`http://203.151.66.114:86/oss_api/public/display/${account?.id}-`)
+									? Color.split(`https://203.150.33.118:4585/oss_api/public/display/${account?.img[0]?.id}-`)
 									: 'ยังไม่ได้อัพโหลด'}
 							</Text>
 						</View>
@@ -378,6 +399,14 @@ export default function Home() {
 
 	return (
 		<>
+			{refreshing && (
+				<>
+					<ModalWait text={'กำลังโหลดข้อมูล'} />
+					<View
+						style={{height: '100%', width: '100%', backgroundColor: 'transprent', zIndex: 999, position: 'absolute'}}
+					/>
+				</>
+			)}
 			{closeCamera && (
 				<Modal
 					handleCamera={() => handleCamera('face')}
@@ -417,7 +446,8 @@ export default function Home() {
 									width: 'auto',
 									height: 30,
 									left: 10,
-									top: Platform.OS === 'android' ? 20 : 40,
+									marginTop: 30,
+									// top: Platform.OS === 'android' ? 20 : 40,
 									flexDirection: 'row',
 								}}
 							>
@@ -426,7 +456,7 @@ export default function Home() {
 							</TouchableOpacity>
 						</View>
 
-						<View style={{flex: 5}}>
+						<View style={{flex: 5, paddingBottom: 30}}>
 							<View
 								style={{
 									backgroundColor: 'transparent',
@@ -507,7 +537,7 @@ export default function Home() {
 					</View>
 				</ScrollView>
 			) : (
-				<View style={{flex: 1, justifyContent: 'center', backgroundColor: '#000'}}>
+				<View style={{flex: 1, justifyContent: 'center', backgroundColor: '#000', position: 'relative'}}>
 					<View
 						style={{
 							position: 'absolute',

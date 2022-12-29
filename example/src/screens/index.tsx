@@ -8,7 +8,6 @@ import {
 	Dimensions,
 	Image,
 	RefreshControl,
-	Platform,
 	Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
@@ -45,6 +44,12 @@ export default function Home() {
 	const [empty, setEmpty] = useState<boolean>(false);
 	const [acc, setAcc] = useState<any>(null);
 	const [username, setUserName] = useState<any>('');
+	const [waitB, setWaitB] = useState<Boolean>(false);
+	//saveusers
+	// const [full_name_en, setfull_name_en] = useState<any>(null);
+	// const [people_id, setpeople_id] = useState<any>();
+	// const [wp_rn_no, setwp_rn_no] = useState<any>(null);
+	// const [wp_type_th, setwp_type_th] = useState<any>(null);
 
 	const isFocused = useIsFocused();
 
@@ -55,13 +60,26 @@ export default function Home() {
 		};
 	}, []);
 
+	useEffect(() => {
+		getUsername();
+		getDataAccount();
+		GetIMG();
+		return () => {
+			setIsLoading(true);
+			getDataAccount();
+			wait(1000).then(() => {
+				setRefreshing(false), setIsLoading(false);
+			});
+		};
+	}, [isFocused]);
+
 	const getDataAccount = async () => {
 		setAccount(null);
 		try {
 			const id: string | null = acc;
 			const {data} = await api.getSearch(id);
 			if (data?.length === 0) return setRefreshing(false);
-			await setFormatImage(data[0].img);
+			if (data.img !== null) return await setFormatImage(data[0].img);
 			await setAccount(data[0]);
 		} catch (error) {
 			console.log('error', error);
@@ -76,6 +94,7 @@ export default function Home() {
 		setImageVisa(null);
 		setImageHealth(null);
 		setImageSecure(null);
+		if (images === null) return;
 		for (const img of images) {
 			const {pic_no, url} = img;
 			if (pic_no === 1) setImageFace(url);
@@ -91,7 +110,7 @@ export default function Home() {
 		setRefreshing(true);
 		setIsLoading(true);
 		getUsername();
-		wait(2000).then(() => {
+		wait(1000).then(() => {
 			setRefreshing(false), setIsLoading(false);
 		});
 	}, []);
@@ -105,18 +124,6 @@ export default function Home() {
 			setImage('https://i.imgur.com/WyGNtPn.png');
 		}
 	};
-
-	useEffect(() => {
-		getUsername();
-		getDataAccount();
-		GetIMG();
-		return () => {
-			setIsLoading(true);
-			wait(1000).then(() => {
-				setRefreshing(false), setIsLoading(false);
-			});
-		};
-	}, [isFocused]);
 
 	const wait = (timeout: number | undefined) => {
 		return new Promise((resolve: any) => setTimeout(resolve, timeout));
@@ -133,7 +140,7 @@ export default function Home() {
 		await AsyncStorage.removeItem('account');
 		navigation.navigate('login');
 		setData(null);
-		setAccount([]);
+		setAccount(null);
 		setImageFace(null);
 		setImageVisa(null);
 		setImagePassport(null);
@@ -144,12 +151,17 @@ export default function Home() {
 	};
 
 	const handleSearch = async (search: string) => {
+		console.log('waiB', waitB);
+		setWaitB(true);
+		wait(300).then(() => {
+			setWaitB(false);
+		});
 		if (!search) {
 			Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
 			return;
 		}
 		setAcc(search);
-		setAccount([]);
+		setAccount(null);
 		setImageFace(null);
 		setImageVisa(null);
 		setImagePassport(null);
@@ -157,9 +169,14 @@ export default function Home() {
 		setImageSecure(null);
 		setImageHealth(null);
 		const {data} = await api.getSearch(search);
-		// console.log('data >>>>>>', data);
-		if (data?.length === 0) return setRefreshing(false);
-		await setFormatImage(data[0].img);
+		if (data?.length === 0) {
+			Alert.alert('แจ้งเตือน', 'ไม่พบเลขประจำตัว หรือ เลขที่คำขอ');
+			setRefreshing(false);
+			return;
+		}
+		if (data[0]?.img !== null) {
+			await setFormatImage(data[0].img);
+		}
 		await setAccount(data[0]);
 		await AsyncStorage.setItem('account', search);
 
@@ -195,8 +212,19 @@ export default function Home() {
 		}
 	};
 
+	const handleSaveUsers = async () => {
+		const data = await api.postSaveUsers(
+			account?.full_name_en,
+			account?.people_id,
+			account?.wp_rn_no,
+			account?.wp_type_th
+		);
+		console.log('datadata >>>', data.data);
+	};
+
 	const handleEdit = async () => {
 		navigation.navigate('detail');
+		handleSaveUsers();
 	};
 
 	return (
@@ -225,7 +253,8 @@ export default function Home() {
 								width: 'auto',
 								height: 30,
 								left: 20,
-								top: Platform.OS === 'android' ? 20 : 40,
+								// top: Platform.OS === 'android' ? 20 : 40,
+								marginTop: 30,
 							}}
 						>
 							<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>{username}</Text>
@@ -237,7 +266,8 @@ export default function Home() {
 								width: 'auto',
 								height: 30,
 								right: 20,
-								top: Platform.OS === 'android' ? 20 : 40,
+								// top: Platform.OS === 'android' ? 20 : 40,
+								marginTop: 30,
 							}}
 						>
 							<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>ออกจากระบบ</Text>
@@ -274,19 +304,21 @@ export default function Home() {
 									<View style={{width: '70%'}}>
 										<View style={{width: '100%', marginTop: 5}}>
 											<TextInput
-												onChangeText={e => setNoRequest(e)}
+												onChangeText={e => setNoRequest('0010221163131')}
 												value={norequest}
 												style={{...styles.input, fontFamily: 'Kanit-Regular'}}
 												placeholder='เลขประจำตัว หรือ เลขที่คำขอ'
 												keyboardType='default'
+												selectTextOnFocus={true}
 											/>
 										</View>
 									</View>
 									<TouchableOpacity
+										disabled={waitB ? true : false}
 										onPress={() => handleSearch(norequest)}
 										style={{
 											width: '20%',
-											backgroundColor: '#2F8DE4',
+											backgroundColor: waitB ? 'grey' : '#2F8DE4',
 											alignItems: 'center',
 											justifyContent: 'center',
 											borderRadius: 13,
