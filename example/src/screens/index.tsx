@@ -17,6 +17,7 @@ import LottieView from 'lottie-react-native';
 import api from '../api/api';
 import {useIsFocused} from '@react-navigation/native';
 import ModalAlert from '../components/ModalAlert';
+import {Camera} from 'react-native-vision-camera';
 
 export type IHome = {
 	ScannedImage: any;
@@ -61,9 +62,34 @@ export default function Home() {
 	}, []);
 
 	useEffect(() => {
-		getUsername();
-		getDataAccount();
-		GetIMG();
+		const unsubscribe = navigation.addListener('focus', () => {
+			getSearch();
+			setRefreshing(true);
+			wait(500).then(async () => {
+				setRefreshing(false);
+				handleSearch(norequest);
+				// if (norequest) {
+				// 	await AsyncStorage.removeItem('searchh');
+				// }
+			});
+		});
+		return () => {
+			unsubscribe;
+		};
+	}, []);
+
+	const getSearch = async () => {
+		const data = await AsyncStorage.getItem('searchh');
+		setNoRequest(data);
+		handleSearch(data);
+		// await AsyncStorage.removeItem('searchh');
+		return data;
+	};
+
+	useEffect(() => {
+		// getUsername();
+		// getDataAccount();
+		// GetIMG();
 		return () => {
 			setIsLoading(true);
 			getDataAccount();
@@ -74,6 +100,11 @@ export default function Home() {
 	}, [isFocused]);
 
 	const getDataAccount = async () => {
+		if ((await Camera.requestCameraPermission()) !== 'authorized') {
+			await Camera.requestCameraPermission();
+			await Camera.requestMicrophonePermission();
+		}
+
 		setAccount(null);
 		try {
 			const id: string | null = acc;
@@ -109,30 +140,13 @@ export default function Home() {
 	const onRefresh = React.useCallback(() => {
 		setRefreshing(true);
 		setIsLoading(true);
-		getUsername();
 		wait(1000).then(() => {
 			setRefreshing(false), setIsLoading(false);
 		});
 	}, []);
 
-	const GetIMG = async () => {
-		if (await AsyncStorage.getItem('image')) {
-			setCheck(false);
-			getDataAccount();
-			setImage(await AsyncStorage.getItem('image'));
-		} else {
-			setImage('https://i.imgur.com/WyGNtPn.png');
-		}
-	};
-
 	const wait = (timeout: number | undefined) => {
 		return new Promise((resolve: any) => setTimeout(resolve, timeout));
-	};
-
-	const getUsername = async () => {
-		const user = await AsyncStorage.getItem('username');
-		setUserName(user);
-		return user;
 	};
 
 	const handleLogout = async () => {
@@ -150,52 +164,56 @@ export default function Home() {
 		setNoRequest(null);
 	};
 
-	const handleSearch = async (search: string) => {
-		console.log('waiB', waitB);
-		setWaitB(true);
-		wait(300).then(() => {
-			setWaitB(false);
-		});
-		if (!search) {
-			Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
-			return;
-		}
-		setAcc(search);
-		setAccount(null);
-		setImageFace(null);
-		setImageVisa(null);
-		setImagePassport(null);
-		setImageRequest(null);
-		setImageSecure(null);
-		setImageHealth(null);
-		const {data} = await api.getSearch(search);
-		if (data?.length === 0) {
-			Alert.alert('แจ้งเตือน', 'ไม่พบเลขประจำตัว หรือ เลขที่คำขอ');
-			setRefreshing(false);
-			return;
-		}
-		if (data[0]?.img !== null) {
-			await setFormatImage(data[0].img);
-		}
-		await setAccount(data[0]);
-		await AsyncStorage.setItem('account', search);
+	const handleSearch = async (search: any) => {
+		if (search) {
+			setWaitB(true);
+			wait(300).then(() => {
+				setWaitB(false);
+			});
 
-		if (data?.data?.length === 0) {
-			setEmpty(true);
-			setTimeout(() => {
-				setEmpty(false);
-			}, 2000);
+			if (!search) {
+				Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
+				return;
+			}
+			setAcc(search);
 			setAccount(null);
-			return;
-		}
+			setImageFace(null);
+			setImageVisa(null);
+			setImagePassport(null);
+			setImageRequest(null);
+			setImageSecure(null);
+			setImageHealth(null);
+			const {data} = await api.getSearch(search);
+			if (data?.length === 0) {
+				Alert.alert('แจ้งเตือน', 'ไม่พบเลขประจำตัว หรือ เลขที่คำขอ');
+				setRefreshing(false);
+				return;
+			}
+			if (data[0]?.img !== null) {
+				await setFormatImage(data[0].img);
+			}
+			await setAccount(data[0]);
+			if (search) {
+				await AsyncStorage.setItem('account', search);
+			}
 
-		if (data?.data?.length > 0) {
-			setAccount(data?.data[0]);
-			checkStatus(data?.data);
-			setIsLoading(true);
-			setTimeout(() => {
-				setIsLoading(false);
-			}, 200);
+			if (data?.data?.length === 0) {
+				setEmpty(true);
+				setTimeout(() => {
+					setEmpty(false);
+				}, 2000);
+				setAccount(null);
+				return;
+			}
+
+			if (data?.data?.length > 0) {
+				setAccount(data?.data[0]);
+				checkStatus(data?.data);
+				setIsLoading(true);
+				setTimeout(() => {
+					setIsLoading(false);
+				}, 200);
+			}
 		}
 	};
 
@@ -219,10 +237,11 @@ export default function Home() {
 			account?.wp_rn_no,
 			account?.wp_type_th
 		);
-		console.log('datadata >>>', data.data);
+		return data;
 	};
 
 	const handleEdit = async () => {
+		await AsyncStorage.setItem('searchh', norequest);
 		navigation.navigate('detail');
 		handleSaveUsers();
 	};
@@ -304,7 +323,7 @@ export default function Home() {
 									<View style={{width: '70%'}}>
 										<View style={{width: '100%', marginTop: 5}}>
 											<TextInput
-												onChangeText={e => setNoRequest('0010221163131')}
+												onChangeText={e => setNoRequest(e)}
 												value={norequest}
 												style={{...styles.input, fontFamily: 'Kanit-Regular'}}
 												placeholder='เลขประจำตัว หรือ เลขที่คำขอ'

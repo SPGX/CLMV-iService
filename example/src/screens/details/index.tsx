@@ -86,17 +86,17 @@ export default function Home() {
 
 	const getDataAccount = async () => {
 		setRefreshing(true);
-		// await Camera.requestCameraPermission();
-		// await Camera.getAvailableCameraDevices();
-		// await Camera.getCameraPermissionStatus();
+		await Camera.getCameraPermissionStatus();
 		await Camera.getMicrophonePermissionStatus();
+		// await Camera.requestCameraPermission();
+		// await Camera.requestMicrophonePermission();
 		setImageFace(null);
 		setImageVisa(null);
 		setImagePassport(null);
 		setImageRequest(null);
 		setImageSecure(null);
 		setImageHealth(null);
-		wait(2000).then(async () => {
+		wait(500).then(async () => {
 			try {
 				const id: string | null = await AsyncStorage.getItem('account');
 				if (!id) {
@@ -576,7 +576,7 @@ export default function Home() {
 									position: 'relative',
 								}}
 								photo={true}
-								device={switch_c ? devices.front : devices.back}
+								device={switch_c ? devices?.front : devices?.back}
 								isActive={true}
 							/>
 							<View
