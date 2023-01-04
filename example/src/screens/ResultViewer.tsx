@@ -93,6 +93,10 @@ const ResultViewerScreen: React.FunctionComponent<IResultViewerScreen> = ({navig
 					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 3, data[0]?.people_id);
 					return UpImages;
 				}
+				if (GetType === 'visa2') {
+					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 7, data[0]?.people_id);
+					return UpImages;
+				}
 				if (GetType === 'request') {
 					const UpImages = await api.postUploadImage('file://' + normalizedImageResult.imageURL, 4, data[0]?.people_id);
 					return UpImages;

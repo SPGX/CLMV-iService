@@ -41,6 +41,7 @@ export default function Home() {
 	const [imageSecure, setImageSecure] = useState<any>(null); // 5
 	const [imageVisa, setImageVisa] = useState<any>(null); // 3
 	const [imageRequest, setImageRequest] = useState<any>(null); // 4
+	const [imageVisa2, setImageVisa2] = useState<any>(null); // 7
 
 	const windowHeight = Dimensions.get('window').height;
 	const windowWidth = Dimensions.get('window').width;
@@ -92,6 +93,7 @@ export default function Home() {
 		// await Camera.requestMicrophonePermission();
 		setImageFace(null);
 		setImageVisa(null);
+		setImageVisa2(null);
 		setImagePassport(null);
 		setImageRequest(null);
 		setImageSecure(null);
@@ -127,6 +129,7 @@ export default function Home() {
 			if (pic_no === 4) setImageRequest(url);
 			if (pic_no === 5) setImageSecure(url);
 			if (pic_no === 6) setImageHealth(url);
+			if (pic_no === 7) setImageVisa2(url);
 		}
 	};
 
@@ -158,6 +161,11 @@ export default function Home() {
 			}
 			if (v === 'visa') {
 				const data = await api.postUploadImage(image?.path, 3, account?.people_id);
+				getDataAccount();
+				return data;
+			}
+			if (v === 'visa2') {
+				const data = await api.postUploadImage(image?.path, 7, account?.people_id);
 				getDataAccount();
 				return data;
 			}
@@ -237,6 +245,13 @@ export default function Home() {
 			setCloseCamera(false);
 			return data;
 		}
+		if (v === 'visa2') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			navigation.navigate('Scanner');
+			setStartCamera(true);
+			setCloseCamera(false);
+			return data;
+		}
 		if (v === 'request') {
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
@@ -279,6 +294,10 @@ export default function Home() {
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
 		}
+		if (v === 'visa2') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			return data;
+		}
 		if (v === 'request') {
 			const data = await AsyncStorage.setItem('cameraType', v);
 			return data;
@@ -310,6 +329,11 @@ export default function Home() {
 			getDataAccount();
 			return data;
 		}
+		if (v === 'visa2') {
+			const data = await api.postUploadImage(null, 7, account?.people_id);
+			getDataAccount();
+			return data;
+		}
 		if (v === 'request') {
 			const data = await api.postUploadImage(null, 4, account?.people_id);
 			getDataAccount();
@@ -336,6 +360,7 @@ export default function Home() {
 		if (onPress === 'face') setExImg(imageFace);
 		if (onPress === 'passport') setExImg(imagePassport);
 		if (onPress === 'visa') setExImg(imageVisa);
+		if (onPress === 'visa2') setExImg(imageVisa2);
 		if (onPress === 'request') setExImg(imageRequest);
 		if (onPress === 'secure') setExImg(imageSecure);
 		if (onPress === 'health') setExImg(imageHealth);
@@ -529,7 +554,143 @@ export default function Home() {
 								<Text style={styles.textBlue}>เอกสารสำคัญ</Text>
 							</TouchableOpacity>
 							{DocumentCamera('รูป Passport', imagePassport, 'passport')}
-							{DocumentCamera('รูป VISA', imageVisa, 'visa')}
+							{/* {DocumentCamera('รูป VISA', imageVisa, 'visa')} */}
+							<TouchableOpacity activeOpacity={1} style={styles.new_border}>
+								<View style={styles.new_b_doc}>
+									<View style={{flexDirection: 'column'}}>
+										<TouchableOpacity onPress={() => Check('visa')}>
+											<Text style={styles.new_b_text_1}>รูป VISA</Text>
+											<View style={{width: '100%'}}>
+												<Text
+													numberOfLines={1}
+													style={{
+														fontFamily: 'Kanit-Regular',
+														fontSize: 12,
+														color: imageVisa ? 'green' : 'red',
+														maxWidth: imageVisa ? '100%' : '100%',
+													}}
+												>
+													{imageVisa
+														? imageVisa.split(
+																`https://203.150.33.118:4585/oss_api/public/display/${account?.img[0]?.id}-`
+														  )
+														: 'ยังไม่ได้อัพโหลด'}
+												</Text>
+											</View>
+										</TouchableOpacity>
+										<TouchableOpacity onPress={() => Check('visa2')}>
+											<Text style={styles.new_b_text_1}>รูป VISA 2</Text>
+											<View style={{width: '100%'}}>
+												<Text
+													numberOfLines={1}
+													style={{
+														fontFamily: 'Kanit-Regular',
+														fontSize: 12,
+														color: imageVisa2 ? 'green' : 'red',
+														maxWidth: imageVisa2 ? '100%' : '100%',
+													}}
+												>
+													{imageVisa2
+														? imageVisa2.split(
+																`https://203.150.33.118:4585/oss_api/public/display/${account?.img[0]?.id}-`
+														  )
+														: 'ยังไม่ได้อัพโหลด'}
+												</Text>
+											</View>
+										</TouchableOpacity>
+									</View>
+									{/* <Image resizeMode='contain' source={{uri: imgcheck}} style={{width: 20, height: 20}} /> */}
+									<View style={{...styles.new_icon, flexDirection: 'column', alignItems: 'center'}}>
+										{imageVisa ? (
+											<View
+												style={{
+													flexDirection: 'row',
+													width: '100%',
+													height: 'auto',
+													alignItems: 'center',
+												}}
+											>
+												<View
+													style={{
+														...styles.iconFile,
+														marginLeft: 2,
+														backgroundColor: 'transparent',
+													}}
+												/>
+												<TouchableOpacity
+													onPress={() => handleDelete('visa')}
+													style={{
+														...styles.iconFile,
+														backgroundColor: 'rgba(255,0,0,0.7)',
+														marginLeft: 2,
+													}}
+												>
+													<FontAwesome name='trash' size={20} color='#fff' />
+												</TouchableOpacity>
+											</View>
+										) : (
+											<View
+												style={{
+													flexDirection: 'row',
+													width: '100%',
+													height: 'auto',
+													alignItems: 'center',
+												}}
+											>
+												<TouchableOpacity
+													onPress={() => handleOpenCamera('visa')}
+													style={{...styles.iconFile, marginRight: 2}}
+												>
+													<Icon name='camera' size={20} color='#fff' />
+												</TouchableOpacity>
+												<TouchableOpacity onPress={() => handleImage('visa')} style={styles.iconFile}>
+													<AntDesign name='picture' size={20} color='#fff' />
+												</TouchableOpacity>
+											</View>
+										)}
+										{imageVisa2 ? (
+											<View
+												style={{
+													flexDirection: 'row',
+													width: '100%',
+													height: 'auto',
+													alignItems: 'center',
+												}}
+											>
+												<View
+													style={{
+														...styles.iconFile,
+														marginLeft: 2,
+														backgroundColor: 'transparent',
+													}}
+												/>
+												<TouchableOpacity
+													onPress={() => handleDelete('visa2')}
+													style={{
+														...styles.iconFile,
+														backgroundColor: 'rgba(255,0,0,0.7)',
+														marginLeft: 2,
+													}}
+												>
+													<FontAwesome name='trash' size={20} color='#fff' />
+												</TouchableOpacity>
+											</View>
+										) : (
+											<View style={{flexDirection: 'row', width: '100%', height: 'auto', alignItems: 'center'}}>
+												<TouchableOpacity
+													onPress={() => handleOpenCamera('visa2')}
+													style={{...styles.iconFile, marginRight: 2}}
+												>
+													<Icon name='camera' size={20} color='#fff' />
+												</TouchableOpacity>
+												<TouchableOpacity onPress={() => handleImage('visa2')} style={styles.iconFile}>
+													<AntDesign name='picture' size={20} color='#fff' />
+												</TouchableOpacity>
+											</View>
+										)}
+									</View>
+								</View>
+							</TouchableOpacity>
 							{DocumentCamera('หนังสือรับรองการจ้าง(บต.46)', imageRequest, 'request')}
 							{DocumentCamera('ใบเสร็จรับเงินประกันสังคมเดือนล่าสุด', imageSecure, 'secure')}
 							{DocumentCamera('บัตรประกันสุขภาพ/ใบเสร็จจาก รพ.ของรัฐ', imageHealth, 'health')}

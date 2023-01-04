@@ -45,6 +45,7 @@ export default function Home() {
 	const [imageVisa, setImageVisa] = useState<any>(null);
 	const [imageRequest, setImageRequest] = useState<any>(null);
 	const [imageFace, setImageFace] = useState<any>(null);
+	const [imageVisa2, setImageVisa2] = useState<any>(null); // 7
 	const [empty, setEmpty] = useState<boolean>(false);
 	const [acc, setAcc] = useState<any>(null);
 	const [on, setOn] = useState<Boolean>(false);
@@ -149,6 +150,7 @@ export default function Home() {
 		setImagePassport(null);
 		setImageRequest(null);
 		setImageVisa(null);
+		setImageVisa2(null);
 		setImageHealth(null);
 		setImageSecure(null);
 		if (images === null) return;
@@ -160,6 +162,7 @@ export default function Home() {
 			if (pic_no === 4) setImageRequest(url);
 			if (pic_no === 5) setImageSecure(url);
 			if (pic_no === 6) setImageHealth(url);
+			if (pic_no === 7) setImageVisa2(url);
 		}
 	};
 
@@ -188,6 +191,7 @@ export default function Home() {
 		setImageSecure(null);
 		setImageHealth(null);
 		setNoRequest(null);
+		setImageVisa2(null);
 	};
 
 	const handleSearch = async (search: any) => {
@@ -197,14 +201,15 @@ export default function Home() {
 				setWaitB(false);
 			});
 
-			if (!search) {
-				Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
-				return;
-			}
+			// if (!search) {
+			// 	Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
+			// 	return;
+			// }
 			setAcc(search);
 			setAccount(null);
 			setImageFace(null);
 			setImageVisa(null);
+			setImageVisa2(null);
 			setImagePassport(null);
 			setImageRequest(null);
 			setImageSecure(null);
@@ -250,6 +255,7 @@ export default function Home() {
 			if (pic_no === 1) setImageFace(url);
 			if (pic_no === 2) setImagePassport(url);
 			if (pic_no === 3) setImageVisa(url);
+			if (pic_no === 7) setImageVisa2(url);
 			if (pic_no === 4) setImageRequest(url);
 			if (pic_no === 5) setImageSecure(url);
 			if (pic_no === 6) setImageHealth(url);
@@ -765,6 +771,34 @@ export default function Home() {
 																</View>
 																<Text style={{fontFamily: 'Kanit-Regular'}}>VISA</Text>
 															</View>
+															<View
+																style={{
+																	width: '40%',
+																	flexDirection: 'row',
+																	alignItems: 'center',
+																}}
+															>
+																<View
+																	style={{
+																		...styles.circle,
+																		backgroundColor: imageHealth ? '#1AFB74' : '#FB5F4A',
+																	}}
+																>
+																	<Text
+																		style={{
+																			fontFamily: 'Kanit-Regular',
+																			color: '#fff',
+																			fontWeight: 'bold',
+																		}}
+																	>
+																		{imageHealth ? '100%' : '0%'}
+																	</Text>
+																</View>
+																<Text style={{fontFamily: 'Kanit-Regular'}}>VISA 2</Text>
+															</View>
+														</View>
+
+														<View style={styles.borderInputBottom}>
 															<View
 																style={{
 																	width: '40%',
