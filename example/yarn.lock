@@ -1116,7 +1116,7 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@react-native-async-storage/async-storage@^1.17.11":
+"@react-native-async-storage/async-storage@^1.13.4", "@react-native-async-storage/async-storage@^1.17.11":
   version "1.17.11"
   resolved "https://registry.npmjs.org/@react-native-async-storage/async-storage/-/async-storage-1.17.11.tgz"
   integrity sha512-bzs45n5HNcDq6mxXnSsOHysZWn1SbbebNxldBXCQs8dSvF8Aor9KCdpm+TpnnGweK3R6diqsT8lFhX77VX0NFw==
@@ -4133,7 +4133,7 @@ prompts@^2.4.0:
     kleur "^3.0.3"
     sisteransi "^1.0.5"
 
-prop-types@*, prop-types@^15.7.2:
+prop-types@*, prop-types@^15.5.10, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.8.1"
   resolved "https://registry.npmmirror.com/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -4154,11 +4154,6 @@ pump@^3.0.0:
   dependencies:
     end-of-stream "^1.1.0"
     once "^1.3.1"
-
-q@^1.4.1:
-  version "1.5.1"
-  resolved "https://registry.npmjs.org/q/-/q-1.5.1.tgz"
-  integrity sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==
 
 query-string@^7.0.0:
   version "7.1.1"
@@ -4183,6 +4178,11 @@ react-devtools-core@^4.23.0:
     shell-quote "^1.6.1"
     ws "^7"
 
+react-fast-compare@*:
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/react-fast-compare/-/react-fast-compare-3.2.0.tgz"
+  integrity sha512-rtGImPZ0YyLrscKI9xTpV8psd6I8VAtjKCzQDlzyDvqJA8XOW78TXYQwNRNd8g8JZnDu8q9Fu/1v4HPAVwVdHA==
+
 react-freeze@^1.0.0:
   version "1.0.3"
   resolved "https://registry.npmmirror.com/react-freeze/-/react-freeze-1.0.3.tgz"
@@ -4202,6 +4202,13 @@ react-is@^17.0.1:
   version "17.0.2"
   resolved "https://registry.npmmirror.com/react-is/-/react-is-17.0.2.tgz"
   integrity sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==
+
+react-native-camera@^4.2.1, react-native-camera@>=1.0.2:
+  version "4.2.1"
+  resolved "https://registry.npmjs.org/react-native-camera/-/react-native-camera-4.2.1.tgz"
+  integrity sha512-+Vkql24PFYQfsPRznJCvPwJQfyzCnjlcww/iZ4Ej80bgivKjL9eU0IMQIXp4yi6XCrKi4voWXxIDPMupQZKeIQ==
+  dependencies:
+    prop-types "^15.6.2"
 
 react-native-codegen@^0.0.17:
   version "0.0.17"
@@ -4245,6 +4252,32 @@ react-native-image-selfie-segmentation@^0.2.3:
   version "0.2.3"
   resolved "https://registry.npmjs.org/react-native-image-selfie-segmentation/-/react-native-image-selfie-segmentation-0.2.3.tgz"
   integrity sha512-8V2h7xc4dxRbiWFRYVPt6QaYM5xNwRPqViqg9RXkjHZ/LmpL+ODr27oLZ/ktk85ir7ufzmmRw6v8gKRV78Mtww==
+
+react-native-permissions@^2.0.2:
+  version "2.2.2"
+  resolved "https://registry.npmjs.org/react-native-permissions/-/react-native-permissions-2.2.2.tgz"
+  integrity sha512-ihf4shQDSX5Oo9ChQXb9kr13mmyyNem5MaEvOpr3dCjhBOBWyEMztXm9/uPK1Qg5PsNpaYLa1KpcPZDCw87LXg==
+
+react-native-permissions@^3.6.1:
+  version "3.6.1"
+  resolved "https://registry.npmjs.org/react-native-permissions/-/react-native-permissions-3.6.1.tgz"
+  integrity sha512-fzPpPQXeD34inUccqtoResSwYubfrwUguP4qrVUUv8+KSMjYSaHGoS5HaIJLZHlN9gO+TvLJZ2L5ZljTsb6qnQ==
+
+react-native-qrcode-mask@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/react-native-qrcode-mask/-/react-native-qrcode-mask-1.0.0.tgz"
+  integrity sha512-GpbVigvvXYenvrW5RsA7CBgUuATrQwYk/uWMvooqNci7dtivqXg24YFQo8MCYPd1plrdZM47mc+Xf11z/VDj4Q==
+  dependencies:
+    react-fast-compare "*"
+
+react-native-qrcode-scanner@^1.5.5:
+  version "1.5.5"
+  resolved "https://registry.npmjs.org/react-native-qrcode-scanner/-/react-native-qrcode-scanner-1.5.5.tgz"
+  integrity sha512-il79uStkFqUvofqXJQfOL30qgQyU17MUKxj7IGHv6oT2OxIY/vutTwuPPDbsivtv0yTMHP4dGx/79oys4eAuNw==
+  dependencies:
+    "@react-native-async-storage/async-storage" "^1.13.4"
+    prop-types "^15.5.10"
+    react-native-permissions "^2.0.2"
 
 react-native-reanimated@^2.9.1:
   version "2.9.1"
@@ -4290,13 +4323,6 @@ react-native-simple-radio-button@^2.7.4:
   resolved "https://registry.npmmirror.com/react-native-simple-radio-button/-/react-native-simple-radio-button-2.7.4.tgz"
   integrity sha512-QOZNmJUn0ViBGU+at7wAG/uGzd5PfXi0kMHr9lfTCLXknW/f9f2fOVjxjdHvOCdf/zA/eMJBjGjtusSDzQf1+w==
 
-react-native-ssl-pinning@^1.5.7:
-  version "1.5.7"
-  resolved "https://registry.npmjs.org/react-native-ssl-pinning/-/react-native-ssl-pinning-1.5.7.tgz"
-  integrity sha512-lDdd9uXTPfglUGew4hASaqsWYbPDl0mJ16EU7CLRM0hfdam/lQhVJsv/fIWgz0/8ydHMMy73HbooSPsFZNHVPw==
-  dependencies:
-    q "^1.4.1"
-
 react-native-svg@^13.6.0:
   version "13.6.0"
   resolved "https://registry.npmjs.org/react-native-svg/-/react-native-svg-13.6.0.tgz"
@@ -4313,12 +4339,12 @@ react-native-vector-icons@^9.2.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native-vision-camera@^2.14.1:
+react-native-vision-camera@^2.14.1, react-native-vision-camera@>=2.9.4:
   version "2.14.1"
   resolved "https://registry.npmmirror.com/react-native-vision-camera/-/react-native-vision-camera-2.14.1.tgz"
   integrity sha512-zs8HAuD3pL+T/ngaDUxbvhoqR90b85ab3nm4tO4OCSBDUFhzgDoDXDm+BDhsyQaF0p05Kaskf+rkqCVBI0WEgg==
 
-react-native@*, "react-native@^0.0.0-0 || 0.60 - 0.71 || 1000.0.0", react-native@>=0.40.0, react-native@>=0.46, react-native@>=0.60.0, react-native@0.68.2:
+react-native@*, "react-native@^0.0.0-0 || 0.60 - 0.71 || 1000.0.0", react-native@>=0.40.0, react-native@>=0.46, react-native@>=0.60.0, react-native@>=0.63.3, react-native@0.68.2:
   version "0.68.2"
   resolved "https://registry.npmmirror.com/react-native/-/react-native-0.68.2.tgz"
   integrity sha512-qNMz+mdIirCEmlrhapAtAG+SWVx6MAiSfCbFNhfHqiqu1xw1OKXdzIrjaBEPihRC2pcORCoCHduHGQe/Pz9Yuw==
@@ -4369,7 +4395,7 @@ react-shallow-renderer@16.14.1:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
 
-react@*, "react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@^17 || ^18", react@>=17.0.0, react@17.0.2:
+react@*, "react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@^17 || ^18", react@>=16.13.1, react@>=16.8.6, react@>=17.0.0, react@17.0.2:
   version "17.0.2"
   resolved "https://registry.npmmirror.com/react/-/react-17.0.2.tgz"
   integrity sha512-gnhPt75i/dq/z3/6q/0asP78D0u592D5L1pd7M8P+dck6Fu/jJeL6iVVK23fptSUZj8Vjf++7wXA8UNclGQcbA==
@@ -5149,6 +5175,11 @@ vary@~1.1.2:
   version "1.1.2"
   resolved "https://registry.npmmirror.com/vary/-/vary-1.1.2.tgz"
   integrity sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==
+
+vision-camera-code-scanner@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.npmjs.org/vision-camera-code-scanner/-/vision-camera-code-scanner-0.2.0.tgz"
+  integrity sha512-H5hVkXfbIcGdg9YlhuS8Y/xDX5e32Vo6eK5FyDQsE9AGVjlqEHMmSLHZg7BX8UUm4ADmiAZc8wzc4n8TUqGr0g==
 
 vlq@^1.0.0:
   version "1.0.1"

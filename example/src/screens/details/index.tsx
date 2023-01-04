@@ -452,7 +452,7 @@ export default function Home() {
 								}}
 							>
 								<Icon name='chevron-back' size={20} color='#fff' />
-								<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>ย้อนกลับ</Text>
+								<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>กลับ</Text>
 							</TouchableOpacity>
 						</View>
 
