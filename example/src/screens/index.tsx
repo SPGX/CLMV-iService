@@ -22,7 +22,11 @@ import {useCameraDevices} from 'react-native-vision-camera';
 import {Camera} from 'react-native-vision-camera';
 import {useScanBarcodes, BarcodeFormat} from 'vision-camera-code-scanner';
 import QRCodeScanner from 'react-native-qrcode-scanner';
-import {RNCamera} from 'react-native-camera';
+import ImagePicker from 'react-native-image-crop-picker';
+import jpeg from 'jpeg-js';
+import {Buffer} from 'buffer';
+import jsQR from 'jsqr';
+const PNG = require('pngjs/browser').PNG;
 
 export type IHome = {
 	ScannedImage: any;
@@ -52,6 +56,7 @@ export default function Home() {
 	const [waitB, setWaitB] = useState<Boolean>(false);
 	const isFocused = useIsFocused();
 	const [textQR, setTextQR] = useState<any>(null);
+	const [QR, setQR] = useState<any>(null);
 
 	// const devices = useCameraDevices();
 	// const device = useCameraDevices().back;
@@ -62,6 +67,25 @@ export default function Home() {
 	const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
 		checkInverted: true,
 	});
+
+	// const readQRFromGallery = () => {
+	// launchImageLibrary(
+	//     {
+	//       selectionLimit: 1,
+	//       mediaType: 'photo',
+	//       includeBase64: true,
+	//     },
+	//     ({ didCancel, assets, errorCode }) => {
+	//       if (didCancel || errorCode || !assets || assets.length === 0) {
+	//        // Handle errors here, or separately
+	//         return;
+	//       }
+
+	//       // Get the image and its base64 data into a buffer
+
+	//     }
+	//   );
+	// };
 
 	const checkCameraPermission = async () => {
 		const devices = await Camera.getAvailableCameraDevices();
@@ -279,6 +303,7 @@ export default function Home() {
 	};
 
 	const handleQRCode = (e: any) => {
+		console.log('eeeeeeee', e);
 		setTextQR(e?.data);
 		handleSearch(e?.data);
 		setNoRequest(e?.data);
@@ -288,6 +313,40 @@ export default function Home() {
 	const handleScan = () => {
 		setTextQR(null);
 		setOn(true);
+	};
+
+	const handleImage = () => {
+		ImagePicker.openPicker({
+			width: 800,
+			height: 1000,
+			cropping: false,
+			includeBase64: true,
+		}).then(async (image: any) => {
+			const base64Buffer = Buffer.from(image.data, 'base64');
+			let pixelData: any;
+			let imageBuffer: any;
+
+			// Handle decoding based on different mimetypes
+			if (image.mime === 'image/jpeg') {
+				pixelData = jpeg.decode(base64Buffer, {useTArray: true}); // --> useTArray makes jpeg-js work on react-native without needing to nodeify it
+				imageBuffer = pixelData.data;
+			} else if (image.mime === 'image/png') {
+				pixelData = PNG.sync.read(base64Buffer);
+				imageBuffer = pixelData.data;
+			} else {
+				// you can alert the user here that the format is not supported
+				return;
+			}
+
+			// Convert the buffer into a clamped array that jsqr uses
+			const data = Uint8ClampedArray.from(imageBuffer);
+
+			// Get the QR string from the image
+			const code = jsQR(data, image.width, image.height);
+			setOn(false);
+			setNoRequest(code?.data);
+			handleSearch(code?.data);
+		});
 	};
 
 	return (
@@ -313,13 +372,34 @@ export default function Home() {
 									<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>ออก</Text>
 								</View>
 							</TouchableOpacity>
+							<TouchableOpacity
+								activeOpacity={1}
+								onPress={() => handleImage()}
+								style={{
+									position: 'absolute',
+									width: 'auto',
+									height: 30,
+									right: 20,
+									// top: Platform.OS === 'android' ? 20 : 40,
+									marginTop: 30,
+									zIndex: 99,
+								}}
+							>
+								<View style={{backgroundColor: 'grey', padding: 5, borderRadius: 10, paddingHorizontal: 10}}>
+									<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>เลือกจากคลัง</Text>
+								</View>
+							</TouchableOpacity>
 
 							<QRCodeScanner
 								onRead={e => handleQRCode(e)}
-								// flashMode={RNCamera.Constants.FlashMode.torch}
+								reactivate={true}
 								topContent={
 									<Text style={{fontFamily: 'Kanit-Bold', color: '#000'}}>{textQR ? textQR : 'ยังไม่มีข้อมูล'}</Text>
+									// <QRCodeImageReader onRead={onRead}>
+									// 	<Image source={require('../assets/images/qrcode.jpg')} />
+									// </QRCodeImageReader>
 								}
+								showMarker={true}
 								bottomContent={
 									<TouchableOpacity>
 										<Text style={{fontFamily: 'Kanit-Bold', color: '#000'}}>
@@ -371,7 +451,7 @@ export default function Home() {
 						>
 							{/* <TouchableOpacity
 								activeOpacity={1}
-								onPress={() => setOn(true)}
+								onPress={() => handleImage()}
 								style={{
 									position: 'absolute',
 									width: 'auto',
@@ -381,7 +461,7 @@ export default function Home() {
 									marginTop: 30,
 								}}
 							>
-								<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>testcamera</Text>
+								<Text>sssss</Text>
 							</TouchableOpacity> */}
 							<TouchableOpacity
 								onPress={handleLogout}
@@ -578,6 +658,16 @@ export default function Home() {
 													alignItems: 'flex-start',
 												}}
 											>
+												{/* {QR && (
+													<Image
+														style={{
+															resizeMode: 'contain',
+															width: '20%',
+															height: '20%',
+														}}
+														source={{uri: QR}}
+													/>
+												)} */}
 												<View style={styles.bgTitle}>
 													<Text
 														style={{
