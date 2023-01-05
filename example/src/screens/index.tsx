@@ -303,7 +303,6 @@ export default function Home() {
 	};
 
 	const handleQRCode = (e: any) => {
-		console.log('eeeeeeee', e);
 		setTextQR(e?.data);
 		handleSearch(e?.data);
 		setNoRequest(e?.data);
