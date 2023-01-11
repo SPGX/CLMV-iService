@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import config from '../config/env';
+// import {FormData} from 'react-native';
 
 export default {
 	postLogin: async (username: any, password: any) => {
@@ -25,21 +26,12 @@ export default {
 
 	postSaveUsers: async (full_name_en: any, people_id: any, wp_rn_no: any, wp_type_th: any) => {
 		const token = await AsyncStorage.getItem('token');
-		// console.log('tokennnnnnn', token);
-		// console.log('full_name_en', full_name_en);
-		// console.log('people_id', people_id);
-		// console.log('wp_rn_no', wp_rn_no);
-		// console.log('wp_type_th', wp_type_th);
 		const data = {
 			full_name_en: full_name_en,
 			people_id: people_id,
 			wp_rn_no: wp_rn_no,
 			wp_type_th: wp_type_th,
 		};
-
-		// `${config.api}/saveforeigner?full_name_en=${JSON.stringify(full_name_en)}&people_id=${JSON.stringify(
-		// 			people_id
-		// 		)}&wp_rn_no=${JSON.stringify(wp_rn_no)}&wp_type_th=${JSON.stringify(wp_type_th)}`,
 
 		return await axios
 			.post(`${config.api}/saveforeigner`, data, {
@@ -55,23 +47,6 @@ export default {
 				console.log(err);
 				return err;
 			});
-
-		// await axios({
-		// 	method: 'post',
-		// 	url: `${config.api}`,
-		// 	data: data,
-		// 	headers: {
-		// 		Authorization: `Bearer ${token}`,
-		// 	},
-		// })
-		// .then(async (res: any) => {
-		// 	console.log('save >>>', res.data);
-		// 	return res;
-		// })
-		// .catch((err: any) => {
-		// 	console.log(err);
-		// 	return err;
-		// });
 	},
 
 	getSearch: async (search: any) => {
@@ -87,15 +62,44 @@ export default {
 			});
 	},
 
-	postUploadImage: async (file_img: any, pic_no: number, id: number) => {
+	postUploadImage: async (file_img: string, pic_no: any, id: any) => {
+		const token = await AsyncStorage.getItem('token');
+		// console.log('TOKEN', token);
 		// console.log('file_img', file_img);
 		// console.log('pic_no', pic_no);
 		// console.log('id', id);
+		// let name: any = 'img_from_mobile.jpg';
 		const formData = new FormData();
-		if (file_img === null) {
+
+		type formData = {
+			type: string;
+			name: string;
+			uri?: string;
+		};
+
+		// formData.append('file_img', {
+		// 	uri: file_img,
+		// 	type: 'mobile/jpg',
+		// 	name: 'image.jpg',
+		// });
+
+		// if (!file_img)
+		// 	formData.append('file_img', {
+		// 		type: 'image/jpg',
+		// 		name: 'img_from_mobile.jpg',
+		// 	});
+
+		// if (file_img)
+		// 	formData.append('file_img', {
+		// 		uri: file_img,
+		// 		type: 'image/jpg',
+		// 		name: 'image.jpg',
+		// 	});
+
+		if (file_img == null) {
 			formData.append('file_img', {
 				type: 'image/jpg',
-				name: 'image.jpg',
+				name: 'img_from_mobile.jpg',
 			});
 		} else {
 			formData.append('file_img', {
@@ -107,9 +111,9 @@ export default {
 		formData.append('pic_no', pic_no);
 		formData.append('people_id', id);
 
-		const token = await AsyncStorage.getItem('token');
+		// console.log('=========== formData ===========', JSON.stringify(formData));
 
-		await axios({
+		return await axios({
 			method: 'post',
 			url: `${config.api}/uploadfile`,
 			data: formData,
@@ -119,10 +123,11 @@ export default {
 			},
 		})
 			.then(async (res: any) => {
+				// console.log('res -->', res);
 				return res;
 			})
 			.catch((err: any) => {
-				console.log('ERR >>', err);
+				// console.log('ERR >>', err);
 				return err;
 			});
 	},

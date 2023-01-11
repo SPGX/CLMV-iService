@@ -8,6 +8,7 @@ import {
 	Image,
 	RefreshControl,
 	Platform,
+	// BackHandler,
 	Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
@@ -23,6 +24,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
 import {replaceBackground} from 'react-native-image-selfie-segmentation';
 import ModalWait from '../../components/ModalWait';
+import ModalSelect from '../../components/ModalSelect';
 
 interface Home {
 	resolve: () => void;
@@ -42,6 +44,7 @@ export default function Home() {
 	const [imageVisa, setImageVisa] = useState<any>(null); // 3
 	const [imageRequest, setImageRequest] = useState<any>(null); // 4
 	const [imageVisa2, setImageVisa2] = useState<any>(null); // 7
+	const [test, setTest] = useState<any>(null); // 7
 
 	const windowHeight = Dimensions.get('window').height;
 	const windowWidth = Dimensions.get('window').width;
@@ -51,6 +54,9 @@ export default function Home() {
 	const [cam, setCam] = useState<any>();
 	const [opencam, setOpenCam] = useState<boolean>(true);
 	const [switch_c, setSwitch_c] = useState<boolean>(true);
+	const [loading, setLoading] = useState<boolean>(false);
+	const [editcamera, setEditCamera] = useState<boolean>(false);
+	const [editcam, setEditCam] = useState<any>(null);
 	const camera = useRef<Camera>(null);
 	const devices = useCameraDevices('wide-angle-camera');
 
@@ -59,6 +65,15 @@ export default function Home() {
 	useEffect(() => {
 		getDataAccount();
 	}, []);
+
+	// useEffect(() => {
+	// 	const onBackPress = () => {
+	// 		return false;
+	// 	};
+	// 	BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+	// 	return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+	// }, []);
 
 	useEffect(() => {
 		const unsubscribe = navigation.addListener('focus', () => {
@@ -89,8 +104,6 @@ export default function Home() {
 		setRefreshing(true);
 		await Camera.getCameraPermissionStatus();
 		await Camera.getMicrophonePermissionStatus();
-		// await Camera.requestCameraPermission();
-		// await Camera.requestMicrophonePermission();
 		setImageFace(null);
 		setImageVisa(null);
 		setImageVisa2(null);
@@ -133,7 +146,7 @@ export default function Home() {
 		}
 	};
 
-	const handleRemove = async (v: any) => {
+	const handleRemove = async (v: string) => {
 		if (v === 'face') {
 			const data = await api.postUploadImage(null, 1, account?.people_id);
 			getDataAccount();
@@ -142,13 +155,14 @@ export default function Home() {
 		}
 	};
 
-	const handleImage = (v: any) => {
+	const handleImage = (v: string) => {
 		setCloseCamera(false);
 		ImagePicker.openPicker({
 			width: 800,
 			height: 1000,
 			cropping: false,
 		}).then(async image => {
+			console.log('image ===>', image);
 			if (v === 'face') {
 				const data = await api.postUploadImage(image?.path, 1, account?.people_id);
 				getDataAccount();
@@ -190,40 +204,127 @@ export default function Home() {
 	const handleSave = async () => {
 		if (camera) {
 			setOpenCam(true);
+			getDataAccount();
 		}
 	};
 
 	const handleCap = async () => {
 		if (camera) {
 			const photo = await camera?.current?.takePhoto();
+			console.log('photo >>>', photo?.path);
 			setCam('file://' + photo?.path);
-			onProcessImageHandler('file://' + photo?.path);
+			let cap = 'file://' + photo?.path;
+			onProcessImageHandler(cap);
 		}
 	};
 
-	const onProcessImageHandler = async (data: any) => {
-		if (data && backgroundImage) {
-			await replaceBackground(data, backgroundImage, 500)
-				.then(async (response: any) => {
-					const data = await api.postUploadImage(response, 1, account?.people_id);
-					getDataAccount();
-					return data;
+	const onProcessImageHandler = async (data: string) => {
+		// console.log('onProcessImageHandler >>', data);
+		if (data) {
+			await replaceBackground(data, backgroundImage, 1000)
+				.then((response: any) => {
+					console.log('if response', response);
+					setTest(response);
+					ProfileImages(response);
+					setLoading(true);
+					setTimeout(async () => {
+						setLoading(false);
+					}, 1000);
 				})
-				.catch(error => {
-					console.log(error);
+				.catch((error: string) => {
+					console.log('errorerror>>', error);
 				});
 		}
 	};
 
-	const handleCamera = (_v: any) => {
+	const ProfileImages = async (response: any) => {
+		console.log('==================================================================');
+		// console.log('response ------->', response);
+		const posts: any = await api.postUploadImage(response, 1, account?.people_id);
+		if (posts?.data?.status) {
+			const data = posts?.data?.data?.url;
+			console.log('resProfile >>', posts?.data);
+			setTest(data);
+			setLoading(true);
+			setTimeout(async () => {
+				setLoading(false);
+			}, 1000);
+			getDataAccount();
+		} else {
+			console.log('------------------------------ ELSE ------------------------------');
+			ProfileImages(response);
+			return;
+		}
+	};
+
+	const handleCamera = (_v: string) => {
 		setCam(null);
 		setCloseCamera(false);
 		setOpenCam(false);
 	};
 
+	const handleSelectCam = (v: any) => {
+		console.log('V ->', v);
+		ImagePicker.openCamera({
+			width: 800,
+			height: 1000,
+			cropping: true,
+		}).then(async (image: any) => {
+			console.log('image ===>', image.path);
+			if (v === 'face') {
+				const data = await api.postUploadImage(image?.path, 1, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data.data);
+				return data;
+			}
+			if (v === 'passport') {
+				const data = await api.postUploadImage(image?.path, 2, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+			if (v === 'visa') {
+				const data = await api.postUploadImage(image?.path, 3, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+			if (v === 'visa2') {
+				const data = await api.postUploadImage(image?.path, 7, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+			if (v === 'request') {
+				const data = await api.postUploadImage(image?.path, 4, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+			if (v === 'secure') {
+				const data = await api.postUploadImage(image?.path, 5, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+			if (v === 'health') {
+				const data = await api.postUploadImage(image?.path, 6, account?.people_id);
+				getDataAccount();
+				console.log('data>>>>>', data.data);
+				return data;
+			}
+		});
+		setEditCamera(false);
+	};
+
+	const handleSelectScan = () => {
+		handleOpenCamera(editcam);
+		setEditCamera(false);
+	};
+
 	const handleฺBack = async () => navigation.goBack();
 
-	const handleOpenCamera = async (v: any) => {
+	const handleOpenCamera = async (v: string) => {
 		if (v === 'face') {
 			const data = await AsyncStorage.setItem('cameraType', v);
 			navigation.navigate('Scanner');
@@ -278,6 +379,52 @@ export default function Home() {
 	const handleCloseCamera = () => {
 		setCloseCamera(false);
 		setExImg(null);
+		setEditCamera(false);
+	};
+
+	const handleSelectCamera = async (v: any) => {
+		if (v === 'face') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'passport') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'visa') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'visa2') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'request') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'secure') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
+		if (v === 'health') {
+			const data = await AsyncStorage.setItem('cameraType', v);
+			setEditCamera(v);
+			setEditCam(v);
+			return data;
+		}
 	};
 
 	const handleUpload = async (v: any) => {
@@ -313,7 +460,7 @@ export default function Home() {
 		setPart(v);
 	};
 
-	const handleDelete = async (v: any) => {
+	const handleDelete = async (v: string) => {
 		if (v === 'face') {
 			const data = await api.postUploadImage(null, 1, account?.people_id);
 			getDataAccount();
@@ -406,7 +553,8 @@ export default function Home() {
 						) : (
 							<>
 								<TouchableOpacity
-									onPress={() => handleOpenCamera(onPress)}
+									onPress={() => handleSelectCamera(onPress)}
+									// onPress={() => handleOpenCamera(onPress)}
 									style={{...styles.iconFile, marginRight: 2}}
 								>
 									<Icon name='camera' size={20} color='#fff' />
@@ -428,7 +576,15 @@ export default function Home() {
 				<>
 					<ModalWait text={'กำลังโหลดข้อมูล'} />
 					<View
-						style={{height: '100%', width: '100%', backgroundColor: 'transprent', zIndex: 999, position: 'absolute'}}
+						style={{height: '100%', width: '100%', backgroundColor: 'transparent', zIndex: 999, position: 'absolute'}}
+					/>
+				</>
+			)}
+			{loading && (
+				<>
+					<ModalWait text={'กำลังประมวลผลภาพ'} />
+					<View
+						style={{height: '100%', width: '100%', backgroundColor: 'transparent', zIndex: 999, position: 'absolute'}}
 					/>
 				</>
 			)}
@@ -440,6 +596,14 @@ export default function Home() {
 					handleDelete={() => handleRemove('face')}
 					cancel={undefined}
 					Check={imageFace}
+				/>
+			)}
+			{editcamera && (
+				<ModalSelect
+					handleSelectCam={() => handleSelectCam(editcam)}
+					handleScan={() => handleSelectScan()}
+					handleClose={handleCloseCamera}
+					cancel={undefined}
 				/>
 			)}
 
@@ -454,7 +618,6 @@ export default function Home() {
 						style={{
 							flexDirection: 'column',
 							height: '100%',
-							// paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
 						}}
 					>
 						<View
@@ -464,32 +627,14 @@ export default function Home() {
 								backgroundColor: '#4399DB',
 							}}
 						>
-							<TouchableOpacity
-								onPress={handleฺBack}
-								style={{
-									position: 'absolute',
-									width: 'auto',
-									height: 30,
-									left: 10,
-									marginTop: 30,
-									// top: Platform.OS === 'android' ? 20 : 40,
-									flexDirection: 'row',
-								}}
-							>
+							<TouchableOpacity onPress={handleฺBack} style={styles.bBack}>
 								<Icon name='chevron-back' size={20} color='#fff' />
 								<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>กลับ</Text>
 							</TouchableOpacity>
 						</View>
 
 						<View style={{flex: 5, paddingBottom: 30}}>
-							<View
-								style={{
-									backgroundColor: 'transparent',
-									height: 140,
-									position: 'relative',
-									alignItems: 'center',
-								}}
-							>
+							<View style={styles.bBorderTop}>
 								<View style={styles.borderTop}>
 									<View
 										style={{
@@ -507,11 +652,7 @@ export default function Home() {
 											<TouchableOpacity
 												onPress={() => handleUpload('face')}
 												style={{
-													borderRadius: 10,
-													width: '80%',
-													height: '100%',
-													justifyContent: 'center',
-													alignItems: 'center',
+													...styles.tFace,
 													backgroundColor: imageFace ? 'transparent' : 'grey',
 												}}
 											>
@@ -549,7 +690,7 @@ export default function Home() {
 								paddingBottom: 30,
 							}}
 						>
-							{/* <Image resizeMode='contain' source={{uri: backgroundImage}} style={{width: '100%', height: '100%'}} /> */}
+							{/* <Image resizeMode='contain' source={{uri: test}} style={{width: 200, height: 200}} /> */}
 							<TouchableOpacity activeOpacity={1} style={styles.bgTitle}>
 								<Text style={styles.textBlue}>เอกสารสำคัญ</Text>
 							</TouchableOpacity>
@@ -602,14 +743,7 @@ export default function Home() {
 									{/* <Image resizeMode='contain' source={{uri: imgcheck}} style={{width: 20, height: 20}} /> */}
 									<View style={{...styles.new_icon, flexDirection: 'column', alignItems: 'center'}}>
 										{imageVisa ? (
-											<View
-												style={{
-													flexDirection: 'row',
-													width: '100%',
-													height: 'auto',
-													alignItems: 'center',
-												}}
-											>
+											<View style={styles.borderImages}>
 												<View
 													style={{
 														...styles.iconFile,
@@ -629,16 +763,9 @@ export default function Home() {
 												</TouchableOpacity>
 											</View>
 										) : (
-											<View
-												style={{
-													flexDirection: 'row',
-													width: '100%',
-													height: 'auto',
-													alignItems: 'center',
-												}}
-											>
+											<View style={styles.borderImages}>
 												<TouchableOpacity
-													onPress={() => handleOpenCamera('visa')}
+													onPress={() => handleSelectCamera('visa')}
 													style={{...styles.iconFile, marginRight: 2}}
 												>
 													<Icon name='camera' size={20} color='#fff' />
@@ -649,14 +776,7 @@ export default function Home() {
 											</View>
 										)}
 										{imageVisa2 ? (
-											<View
-												style={{
-													flexDirection: 'row',
-													width: '100%',
-													height: 'auto',
-													alignItems: 'center',
-												}}
-											>
+											<View style={styles.borderImages}>
 												<View
 													style={{
 														...styles.iconFile,
@@ -678,7 +798,7 @@ export default function Home() {
 										) : (
 											<View style={{flexDirection: 'row', width: '100%', height: 'auto', alignItems: 'center'}}>
 												<TouchableOpacity
-													onPress={() => handleOpenCamera('visa2')}
+													onPress={() => handleSelectCamera('visa2')}
 													style={{...styles.iconFile, marginRight: 2}}
 												>
 													<Icon name='camera' size={20} color='#fff' />
@@ -740,14 +860,7 @@ export default function Home() {
 								device={switch_c ? devices?.front : devices?.back}
 								isActive={true}
 							/>
-							<View
-								style={{
-									height: '100%',
-									position: 'absolute',
-									width: '100%',
-									justifyContent: 'center',
-								}}
-							>
+							<View style={styles.viewImg1}>
 								<Image
 									resizeMode='contain'
 									source={require('../../assets/images/frame.png')}
@@ -755,80 +868,22 @@ export default function Home() {
 										width: windowWidth,
 										height: windowHeight,
 										zIndex: 0,
-										// backgroundColor: 'red',
 									}}
 								/>
 							</View>
-							<View
-								style={{
-									position: 'absolute',
-									bottom: 0,
-									backgroundColor: '#000',
-									width: '100%',
-									height: '15%',
-									justifyContent: 'space-around',
-									alignItems: 'center',
-									flexDirection: 'row',
-								}}
-							>
-								<View
-									style={{
-										width: 80,
-										height: 80,
-										borderRadius: 50,
-										alignItems: 'center',
-										justifyContent: 'center',
-									}}
-								/>
-								<TouchableOpacity
-									onPress={() => handleCap()}
-									style={{
-										backgroundColor: 'rgba(255,255,255,0.5)',
-										width: 80,
-										height: 80,
-										borderRadius: 50,
-										alignItems: 'center',
-										justifyContent: 'center',
-									}}
-								>
-									<View
-										style={{
-											backgroundColor: '#fff',
-											width: 60,
-											height: 60,
-											borderRadius: 50,
-										}}
-									/>
+							<View style={styles.viewImg2}>
+								<View style={styles.viewImg3} />
+								<TouchableOpacity onPress={() => handleCap()} style={styles.viewImg4}>
+									<View style={styles.viewImg5} />
 								</TouchableOpacity>
-								<TouchableOpacity
-									onPress={() => setSwitch_c(!switch_c)}
-									style={{
-										backgroundColor: 'rgba(255,255,255,0.1)',
-										width: 80,
-										height: 80,
-										borderRadius: 50,
-										alignItems: 'center',
-										justifyContent: 'center',
-									}}
-								>
+								<TouchableOpacity onPress={() => setSwitch_c(!switch_c)} style={styles.switchT}>
 									<Icon name='ios-camera-reverse-outline' size={40} color='#fff' />
 								</TouchableOpacity>
 							</View>
 						</>
 					) : (
-						// <View>
-						//   <Text>Test</Text>
-						// </View>
 						<>
-							<View
-								style={{
-									width: 'auto',
-									height: '80%',
-									justifyContent: 'center',
-									alignItems: 'center',
-									position: 'relative',
-								}}
-							>
+							<View style={styles.viewBorder}>
 								<Image
 									resizeMode='contain'
 									source={{uri: 'file://' + cam}}
@@ -836,22 +891,10 @@ export default function Home() {
 										width: windowWidth / 1,
 										height: windowHeight,
 										zIndex: 0,
-										// backgroundColor: 'red',
 									}}
 								/>
 							</View>
-							<View
-								style={{
-									position: 'absolute',
-									bottom: 0,
-									backgroundColor: '#000',
-									width: '100%',
-									height: '30%',
-									justifyContent: 'space-around',
-									alignItems: 'center',
-									flexDirection: 'row',
-								}}
-							>
+							<View style={styles.vTouch}>
 								<TouchableOpacity
 									onPress={() => handleReset()}
 									style={{

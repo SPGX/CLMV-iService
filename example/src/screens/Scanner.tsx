@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Dimensions, Platform, SafeAreaView, StyleSheet} from 'react-native';
+import {Dimensions, Platform, SafeAreaView, StyleSheet, View, TouchableOpacity, Text} from 'react-native';
 import {Camera, PhotoFile, useCameraDevices, useFrameProcessor} from 'react-native-vision-camera';
 import * as DDN from 'vision-camera-dynamsoft-document-normalizer';
 import {Svg, Polygon} from 'react-native-svg';
@@ -187,6 +187,25 @@ const ScannerScreen: React.FunctionComponent<IScannerScreen> = ({navigation}) =>
 		<SafeAreaView style={styles.container}>
 			{device != null && hasPermission && (
 				<>
+					<View
+						style={{
+							// width: '50%',
+							height: '30%',
+							position: 'absolute',
+							top: 10,
+							left: 10,
+							zIndex: 999,
+						}}
+					>
+						<TouchableOpacity style={{flex: 0.5}}>
+							<TouchableOpacity
+								onPress={() => navigation.goBack()}
+								style={{borderRadius: 15, padding: 8, margin: 5, backgroundColor: 'grey'}}
+							>
+								<Text style={{fontSize: 15, color: 'white', alignSelf: 'center', fontFamily: 'Kanit'}}>ย้อนกลับ</Text>
+							</TouchableOpacity>
+						</TouchableOpacity>
+					</View>
 					<Camera
 						style={StyleSheet.absoluteFill}
 						ref={camera}

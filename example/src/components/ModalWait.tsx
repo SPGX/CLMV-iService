@@ -1,7 +1,7 @@
 import {Text, TouchableOpacity, View, Dimensions} from 'react-native';
 import {styles} from '../templates/theme';
 import LottieView from 'lottie-react-native';
-import React, {FunctionComponent} from 'react';
+import React, {FunctionComponent, useEffect, useRef} from 'react';
 
 // export default function ModalImage({ text }) {
 export type IModal = {
@@ -11,6 +11,16 @@ export type IModal = {
 const ModalAlert: FunctionComponent<IModal> = ({text}) => {
 	const windowWidth = Dimensions.get('window').width;
 	const windowHeight = Dimensions.get('window').height;
+	const lottieRef = useRef<LottieView>(null);
+
+	useEffect(() => {
+		if (lottieRef.current) {
+			setTimeout(() => {
+				lottieRef.current?.reset();
+				lottieRef.current?.play();
+			}, 100);
+		}
+	}, [lottieRef.current]);
 
 	return (
 		<>
@@ -47,6 +57,7 @@ const ModalAlert: FunctionComponent<IModal> = ({text}) => {
 									}}
 								>
 									<LottieView
+										ref={lottieRef}
 										autoPlay
 										style={{
 											width: 100,

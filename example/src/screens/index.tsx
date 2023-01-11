@@ -10,6 +10,7 @@ import {
 	RefreshControl,
 	Alert,
 	Linking,
+	BackHandler,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {styles} from '../templates/theme';
@@ -20,7 +21,6 @@ import {useIsFocused} from '@react-navigation/native';
 import ModalAlert from '../components/ModalAlert';
 import {useCameraDevices} from 'react-native-vision-camera';
 import {Camera} from 'react-native-vision-camera';
-import {useScanBarcodes, BarcodeFormat} from 'vision-camera-code-scanner';
 import QRCodeScanner from 'react-native-qrcode-scanner';
 import ImagePicker from 'react-native-image-crop-picker';
 import jpeg from 'jpeg-js';
@@ -34,7 +34,6 @@ export type IHome = {
 
 export default function Home() {
 	const navigation = useNavigation<any | null>();
-	// const [nocustomer, setNoCustomer] = useState<any | null>(null);
 	const [norequest, setNoRequest] = useState<any | null>(null);
 	const [, setData] = useState<any | null>(null);
 	const [account, setAccount] = useState<any>(null);
@@ -58,34 +57,29 @@ export default function Home() {
 	const [textQR, setTextQR] = useState<any>(null);
 	const [QR, setQR] = useState<any>(null);
 
-	// const devices = useCameraDevices();
-	// const device = useCameraDevices().back;
 	const devices = useCameraDevices('wide-angle-camera');
 	const device = devices.back;
 	const [, setHasPermission] = useState<Boolean>(false);
 
-	const [frameProcessor, barcodes] = useScanBarcodes([BarcodeFormat.QR_CODE], {
-		checkInverted: true,
-	});
+	const lottieRef = useRef<LottieView>(null);
 
-	// const readQRFromGallery = () => {
-	// launchImageLibrary(
-	//     {
-	//       selectionLimit: 1,
-	//       mediaType: 'photo',
-	//       includeBase64: true,
-	//     },
-	//     ({ didCancel, assets, errorCode }) => {
-	//       if (didCancel || errorCode || !assets || assets.length === 0) {
-	//        // Handle errors here, or separately
-	//         return;
-	//       }
+	useEffect(() => {
+		if (lottieRef.current) {
+			setTimeout(() => {
+				lottieRef.current?.reset();
+				lottieRef.current?.play();
+			}, 100);
+		}
+	}, [lottieRef.current]);
 
-	//       // Get the image and its base64 data into a buffer
+	useEffect(() => {
+		const onBackPress = () => {
+			return true;
+		};
+		BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-	//     }
-	//   );
-	// };
+		return () => BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+	}, []);
 
 	const checkCameraPermission = async () => {
 		const devices = await Camera.getAvailableCameraDevices();
@@ -109,9 +103,6 @@ export default function Home() {
 			wait(500).then(async () => {
 				setRefreshing(false);
 				handleSearch(norequest);
-				// if (norequest) {
-				// 	await AsyncStorage.removeItem('searchh');
-				// }
 			});
 		});
 		return () => {
@@ -123,14 +114,10 @@ export default function Home() {
 		const data = await AsyncStorage.getItem('searchh');
 		setNoRequest(data);
 		handleSearch(data);
-		// await AsyncStorage.removeItem('searchh');
 		return data;
 	};
 
 	useEffect(() => {
-		// getUsername();
-		// getDataAccount();
-		// GetIMG();
 		return () => {
 			setIsLoading(true);
 			getDataAccount();
@@ -165,7 +152,6 @@ export default function Home() {
 			await setAccount(data[0]);
 		} catch (error) {
 			console.log('error', error);
-			// Alert.alert('แจ้งเตือน', 'เกิดข้อผิดพลาด');
 		}
 	};
 
@@ -225,10 +211,6 @@ export default function Home() {
 				setWaitB(false);
 			});
 
-			// if (!search) {
-			// 	Alert.alert('แจ้งเตือน', 'กรุณากรอกเลขประจำตัว หรือ เลขที่คำขอ');
-			// 	return;
-			// }
 			setAcc(search);
 			setAccount(null);
 			setImageFace(null);
@@ -269,6 +251,18 @@ export default function Home() {
 					setIsLoading(false);
 				}, 200);
 			}
+		} else {
+			const data = await AsyncStorage.removeItem('searchh');
+			setAcc(search);
+			setAccount(null);
+			setImageFace(null);
+			setImageVisa(null);
+			setImageVisa2(null);
+			setImagePassport(null);
+			setImageRequest(null);
+			setImageSecure(null);
+			setImageHealth(null);
+			return data;
 		}
 	};
 
@@ -333,19 +327,20 @@ export default function Home() {
 				pixelData = PNG.sync.read(base64Buffer);
 				imageBuffer = pixelData.data;
 			} else {
-				// you can alert the user here that the format is not supported
 				return;
 			}
 
-			// Convert the buffer into a clamped array that jsqr uses
 			const data = Uint8ClampedArray.from(imageBuffer);
-
-			// Get the QR string from the image
 			const code = jsQR(data, image.width, image.height);
 			setOn(false);
 			setNoRequest(code?.data);
 			handleSearch(code?.data);
 		});
+	};
+
+	const handleRemove = async () => {
+		setNoRequest(null);
+		await AsyncStorage.removeItem('searchh');
 	};
 
 	return (
@@ -357,34 +352,14 @@ export default function Home() {
 							<TouchableOpacity
 								activeOpacity={1}
 								onPress={() => setOn(false)}
-								style={{
-									position: 'absolute',
-									width: 'auto',
-									height: 30,
-									left: 20,
-									// top: Platform.OS === 'android' ? 20 : 40,
-									marginTop: 30,
-									zIndex: 99,
-								}}
+								style={{position: 'absolute', width: 'auto', height: 30, left: 20, marginTop: 30}}
 							>
 								<View style={{backgroundColor: 'red', padding: 5, borderRadius: 10, paddingHorizontal: 10}}>
 									<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>ออก</Text>
 								</View>
 							</TouchableOpacity>
-							<TouchableOpacity
-								activeOpacity={1}
-								onPress={() => handleImage()}
-								style={{
-									position: 'absolute',
-									width: 'auto',
-									height: 30,
-									right: 20,
-									// top: Platform.OS === 'android' ? 20 : 40,
-									marginTop: 30,
-									zIndex: 99,
-								}}
-							>
-								<View style={{backgroundColor: 'grey', padding: 5, borderRadius: 10, paddingHorizontal: 10}}>
+							<TouchableOpacity activeOpacity={1} onPress={() => handleImage()} style={styles.tAb}>
+								<View style={styles.selectGall}>
 									<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>เลือกจากคลัง</Text>
 								</View>
 							</TouchableOpacity>
@@ -394,9 +369,6 @@ export default function Home() {
 								reactivate={true}
 								topContent={
 									<Text style={{fontFamily: 'Kanit-Bold', color: '#000'}}>{textQR ? textQR : 'ยังไม่มีข้อมูล'}</Text>
-									// <QRCodeImageReader onRead={onRead}>
-									// 	<Image source={require('../assets/images/qrcode.jpg')} />
-									// </QRCodeImageReader>
 								}
 								showMarker={true}
 								bottomContent={
@@ -407,29 +379,6 @@ export default function Home() {
 									</TouchableOpacity>
 								}
 							/>
-
-							{/* <Camera
-								style={{
-									width: 'auto',
-									height: windowHeight,
-									justifyContent: 'center',
-									alignItems: 'center',
-									position: 'relative',
-								}}
-								audio={false}
-								device={device}
-								isActive={true}
-								frameProcessor={frameProcessor}
-								frameProcessorFps={5}
-							/>
-
-							<View style={{position: 'absolute'}}>
-								{barcodes.map((barcode, idx) => (
-									<Text key={idx} style={{fontSize: 20, color: '#000', fontWeight: 'bold'}}>
-										{barcode.displayValue}
-									</Text>
-								))}
-							</View> */}
 						</View>
 					</>
 				) : (
@@ -437,7 +386,6 @@ export default function Home() {
 						style={{
 							flexDirection: 'column',
 							height: '100%',
-							// paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
 						}}
 					>
 						{empty && <ModalAlert text='ไม่พบข้อมูลแรงงาน' />}
@@ -448,72 +396,17 @@ export default function Home() {
 								backgroundColor: '#4399DB',
 							}}
 						>
-							{/* <TouchableOpacity
-								activeOpacity={1}
-								onPress={() => handleImage()}
-								style={{
-									position: 'absolute',
-									width: 'auto',
-									height: 30,
-									left: 20,
-									// top: Platform.OS === 'android' ? 20 : 40,
-									marginTop: 30,
-								}}
-							>
-								<Text>sssss</Text>
-							</TouchableOpacity> */}
-							<TouchableOpacity
-								onPress={handleLogout}
-								style={{
-									position: 'absolute',
-									width: 'auto',
-									height: 30,
-									right: 20,
-									// top: Platform.OS === 'android' ? 20 : 40,
-									marginTop: 30,
-								}}
-							>
+							<TouchableOpacity onPress={handleLogout} style={styles.tAb}>
 								<Text style={{fontFamily: 'Kanit-Bold', color: '#fff'}}>ออกจากระบบ</Text>
 							</TouchableOpacity>
 						</View>
 						<View style={{flex: 5}}>
-							<View
-								style={{
-									backgroundColor: 'transparent',
-									height: 80,
-									position: 'relative',
-									alignItems: 'center',
-								}}
-							>
+							<View style={styles.borderCus}>
 								<View style={styles.borderTop}>
-									<Text
-										style={{
-											fontFamily: 'Kanit-Bold',
-											color: 'rgba(0,0,0,0.7)',
-											marginBottom: 5,
-											fontSize: 16,
-											marginLeft: 10,
-										}}
-									>
-										กรอกข้อมูลแรงงาน
-									</Text>
-									<View
-										style={{
-											flexDirection: 'row',
-											width: '100%',
-											justifyContent: 'space-around',
-										}}
-									>
+									<Text style={styles.InputCus}>กรอกข้อมูลแรงงาน</Text>
+									<View style={styles.raround}>
 										<View style={{width: '60%'}}>
-											<View
-												style={{
-													width: '100%',
-													marginTop: 5,
-													flexDirection: 'row',
-													alignItems: 'center',
-													position: 'relative',
-												}}
-											>
+											<View style={styles.bText}>
 												<View style={{width: '100%'}}>
 													<TextInput
 														onChangeText={e => setNoRequest(e)}
@@ -530,18 +423,7 @@ export default function Home() {
 													/>
 												</View>
 												{norequest ? (
-													<TouchableOpacity
-														onPress={() => setNoRequest(null)}
-														style={{
-															position: 'absolute',
-															right: 5,
-															alignItems: 'center',
-															width: 30,
-															height: 30,
-															backgroundColor: 'rgba(0,0,0,0.2)',
-															borderRadius: 100,
-														}}
-													>
+													<TouchableOpacity onPress={() => handleRemove()} style={styles.tX}>
 														<Text
 															style={{
 																position: 'absolute',
@@ -561,11 +443,8 @@ export default function Home() {
 											disabled={waitB ? true : false}
 											onPress={() => handleSearch(norequest)}
 											style={{
-												width: '20%',
+												...styles.searchT,
 												backgroundColor: waitB ? 'grey' : '#2F8DE4',
-												alignItems: 'center',
-												justifyContent: 'center',
-												borderRadius: 13,
 											}}
 										>
 											<Text style={{fontFamily: 'Kanit-Regular', color: '#fff'}}>ค้นหา</Text>
@@ -574,22 +453,14 @@ export default function Home() {
 											disabled={waitB ? true : false}
 											onPress={() => handleScan()}
 											style={{
-												width: '15%',
+												...styles.TScan,
 												borderColor: waitB ? 'grey' : '#2F8DE4',
-												borderWidth: 2,
-												alignItems: 'center',
-												justifyContent: 'center',
-												borderRadius: 13,
-												marginLeft: 1,
-												position: 'relative',
-												padding: 20,
 											}}
 										>
 											<LottieView
+												ref={lottieRef}
 												autoPlay
 												style={{
-													// width: '100%',
-													// height: '100%',
 													backgroundColor: 'transparent',
 												}}
 												source={require('../assets/animation/qrcode.json')}
@@ -606,312 +477,150 @@ export default function Home() {
 											<View style={{justifyContent: 'center', alignItems: 'center'}}>
 												<LottieView
 													autoPlay
-													style={{
-														width: 200,
-														height: 200,
-														backgroundColor: 'transparent',
-													}}
+													style={styles.bgLottie}
 													source={require('../assets/animation/loading.json')}
 												/>
 											</View>
 										</>
 									) : (
 										<>
-											<TouchableOpacity
-												onPress={() => handleEdit()}
-												activeOpacity={0.8}
-												style={{
-													justifyContent: 'center',
-													alignItems: 'center',
-													marginBottom: 30,
-												}}
-											>
+											<TouchableOpacity onPress={() => handleEdit()} activeOpacity={0.8} style={styles.tborder}>
 												<View style={{width: 150, height: 200, borderRadius: 10}}>
 													<Image
 														resizeMode='cover'
-														style={{
-															width: '100%',
-															height: '100%',
-															borderRadius: 10,
-														}}
+														style={styles.bImg}
 														source={{
 															uri: imageFace ? imageFace : 'https://www.w3schools.com/howto/img_avatar.png',
 														}}
 													/>
 												</View>
-												<Text
-													style={{
-														fontFamily: 'Kanit-Regular',
-														color: 'rgba(0,0,0,8)',
-														fontSize: 10,
-														// marginLeft: 10,
-														marginTop: 5,
-													}}
-												>
-													แก้ไขข้อมูล
-												</Text>
+												<Text style={styles.textEdit}>แก้ไขข้อมูล</Text>
 											</TouchableOpacity>
-											<View
-												style={{
-													backgroundColor: 'transparent',
-													alignItems: 'flex-start',
-												}}
-											>
-												{/* {QR && (
-													<Image
-														style={{
-															resizeMode: 'contain',
-															width: '20%',
-															height: '20%',
-														}}
-														source={{uri: QR}}
-													/>
-												)} */}
+											<View style={styles.tranStart}>
 												<View style={styles.bgTitle}>
-													<Text
-														style={{
-															fontFamily: 'Kanit-Bold',
-															color: '#fff',
-															fontSize: 16,
-															marginLeft: 20,
-														}}
-													>
-														ข้อมูลแรงงาน
-													</Text>
+													<Text style={styles.textCustomer}>ข้อมูลแรงงาน</Text>
 												</View>
 											</View>
 											<View style={{flex: 1}}>
 												<View style={{...styles.borderInput, paddingHorizontal: 10}}>
 													<View style={{flex: 1}}>
 														<View style={styles.borderInputBody}>
-															<Text style={{fontFamily: 'Kanit-Regular'}}>เลขประจำตัวต่างด้าว</Text>
-															<View style={{width: '50%'}}>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>{account?.people_id}</Text>
+															<Text style={styles.fontT}>เลขประจำตัวต่างด้าว</Text>
+															<View style={styles.width50}>
+																<Text style={styles.fontT}>{account?.people_id}</Text>
 															</View>
 														</View>
 														<View style={styles.borderInputBody}>
-															<Text style={{fontFamily: 'Kanit-Regular'}}>เลขที่คำขอ</Text>
+															<Text style={styles.fontT}>เลขที่คำขอ</Text>
 															<View style={{width: '50%', flexWrap: 'wrap'}}>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>{account?.wp_rn_no}</Text>
+																<Text style={styles.fontT}>{account?.wp_rn_no}</Text>
 															</View>
 														</View>
 														<View style={styles.borderInputBody}>
-															<Text style={{fontFamily: 'Kanit-Regular'}}>ชื่อ-นามสกุล</Text>
-															<View style={{width: '50%'}}>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>{account?.full_name_en}</Text>
+															<Text style={styles.fontT}>ชื่อ-นามสกุล</Text>
+															<View style={styles.width50}>
+																<Text style={styles.fontT}>{account?.full_name_en}</Text>
 															</View>
 														</View>
 														<View style={styles.borderInputBody}>
-															<Text style={{fontFamily: 'Kanit-Regular'}}>ประเภทงาน</Text>
-															<View style={{width: '50%'}}>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>{account?.wp_type_th}</Text>
+															<Text style={styles.fontT}>ประเภทงาน</Text>
+															<View style={styles.width50}>
+																<Text style={styles.fontT}>{account?.wp_type_th}</Text>
 															</View>
 														</View>
 													</View>
 												</View>
 											</View>
-											<View
-												style={{
-													backgroundColor: 'transparent',
-													alignItems: 'flex-start',
-												}}
-											>
+											<View style={styles.tranStart}>
 												<View style={styles.bgTitle}>
-													<Text
-														style={{
-															fontFamily: 'Kanit-Bold',
-															color: '#fff',
-															fontSize: 16,
-															marginLeft: 20,
-														}}
-													>
-														สถานะการอัพโหลดเอกสาร
-													</Text>
+													<Text style={styles.textStatus}>สถานะการอัพโหลดเอกสาร</Text>
 												</View>
 												<View style={{width: '100%', paddingHorizontal: 10}}>
 													<View style={{flex: 1}}>
 														<View style={styles.borderInputBottom}>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageFace ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageFace ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageFace ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>รูปใบหน้าคน</Text>
+																<Text style={styles.fontT}>รูปใบหน้าคน</Text>
 															</View>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageRequest ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageRequest ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageRequest ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>หนังสือรับรอง การจ้าง (บต.46)</Text>
+																<Text style={styles.fontT}>หนังสือรับรอง การจ้าง (บต.46)</Text>
 															</View>
 														</View>
 														<View style={styles.borderInputBottom}>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imagePassport ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imagePassport ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imagePassport ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>Passport</Text>
+																<Text style={styles.fontT}>Passport</Text>
 															</View>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageSecure ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageSecure ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageSecure ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>ใบเสร็จรับเงิน ประกันสังคมเดือนล่าสุด</Text>
+																<Text style={styles.fontT}>ใบเสร็จรับเงิน ประกันสังคมเดือนล่าสุด</Text>
 															</View>
 														</View>
 														<View style={styles.borderInputBottom}>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageVisa ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageVisa ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageVisa ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>VISA</Text>
+																<Text style={styles.fontT}>VISA</Text>
 															</View>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageHealth ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageHealth ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageHealth ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>VISA 2</Text>
+																<Text style={styles.fontT}>VISA 2</Text>
 															</View>
 														</View>
 
 														<View style={styles.borderInputBottom}>
-															<View
-																style={{
-																	width: '40%',
-																	flexDirection: 'row',
-																	alignItems: 'center',
-																}}
-															>
+															<View style={styles.borderIm}>
 																<View
 																	style={{
 																		...styles.circle,
 																		backgroundColor: imageHealth ? '#1AFB74' : '#FB5F4A',
 																	}}
 																>
-																	<Text
-																		style={{
-																			fontFamily: 'Kanit-Regular',
-																			color: '#fff',
-																			fontWeight: 'bold',
-																		}}
-																	>
-																		{imageHealth ? '100%' : '0%'}
-																	</Text>
+																	<Text style={styles.fontimgg}>{imageHealth ? '100%' : '0%'}</Text>
 																</View>
-																<Text style={{fontFamily: 'Kanit-Regular'}}>บัตรประกันสุขภาพ/ใบเสร็จ รพ.ของรัฐ</Text>
+																<Text style={styles.fontT}>บัตรประกันสุขภาพ/ใบเสร็จ รพ.ของรัฐ</Text>
 															</View>
 														</View>
 													</View>
@@ -924,50 +633,24 @@ export default function Home() {
 								<>
 									{isLoading ? (
 										<>
-											<View
-												style={{
-													justifyContent: 'center',
-													alignItems: 'center',
-													height: 300,
-												}}
-											>
+											<View style={styles.load1}>
 												<LottieView
 													autoPlay
-													style={{
-														width: 200,
-														height: 200,
-														backgroundColor: 'transparent',
-													}}
+													style={styles.lottie}
 													source={require('../assets/animation/loading.json')}
 												/>
 											</View>
 										</>
 									) : (
 										<>
-											<View
-												style={{
-													justifyContent: 'center',
-													alignItems: 'center',
-													height: 300,
-												}}
-											>
-												<View
-													style={{
-														justifyContent: 'center',
-														alignItems: 'center',
-														height: 300,
-													}}
-												>
+											<View style={styles.load2}>
+												<View style={styles.load2}>
 													<LottieView
 														autoPlay
-														style={{
-															width: 130,
-															height: 130,
-															backgroundColor: 'transparent',
-														}}
+														style={styles.empty1}
 														source={require('../assets/animation/empty.json')}
 													/>
-													<Text style={{fontFamily: 'Kanit-Regular', fontSize: 18}}>ไม่พบข้อมูล</Text>
+													<Text style={styles.fontEmpty}>ไม่พบข้อมูล</Text>
 												</View>
 											</View>
 										</>
@@ -980,4 +663,7 @@ export default function Home() {
 			</ScrollView>
 		</>
 	);
+}
+function onBackPress(): boolean | null | undefined {
+	throw new Error('Function not implemented.');
 }
